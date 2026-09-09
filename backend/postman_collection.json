@@ -1,0 +1,223 @@
+{
+  "info": {
+    "name": "Blockchain Crowdfunding Backend",
+    "description": "REST API collection for the milestone-based crowdfunding backend.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000/api" },
+    { "key": "token", "value": "" },
+    { "key": "walletAddress", "value": "" },
+    { "key": "campaignId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Request Nonce",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/nonce",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"walletAddress\": \"{{walletAddress}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Verify Signature",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/verify",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"walletAddress\": \"{{walletAddress}}\",\n  \"signature\": \"0x...\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Campaigns",
+      "item": [
+        {
+          "name": "Create Campaign",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/campaigns",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contractCampaignId\": 0,\n  \"contractAddress\": \"0x0000000000000000000000000000000000dead\",\n  \"chainId\": 31337,\n  \"creationTxHash\": \"0xaaaa...\",\n  \"title\": \"Clean Water Wells\",\n  \"description\": \"Bringing clean water to rural villages.\",\n  \"imageUrl\": \"https://example.com/image.jpg\",\n  \"goal\": \"3000000000000000000\",\n  \"deadline\": \"2026-12-01T00:00:00.000Z\",\n  \"milestones\": [\n    { \"contractMilestoneId\": 0, \"description\": \"Survey and procurement\", \"amount\": \"1000000000000000000\" },\n    { \"contractMilestoneId\": 1, \"description\": \"Drilling and installation\", \"amount\": \"2000000000000000000\" }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "List Campaigns",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/campaigns?page=1&pageSize=20"
+          }
+        },
+        {
+          "name": "Get Campaign By Id",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/campaigns/{{campaignId}}"
+          }
+        },
+        {
+          "name": "Update Campaign Metadata",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/campaigns/{{campaignId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated description text.\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Contributions",
+      "item": [
+        {
+          "name": "Record Contribution",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/campaigns/{{campaignId}}/contribute",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"txHash\": \"0xbbbb...\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Contributors",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/campaigns/{{campaignId}}/contributors"
+          }
+        },
+        {
+          "name": "List User Contributions",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/users/{{walletAddress}}/contributions"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Milestones",
+      "item": [
+        {
+          "name": "List Milestones",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/campaigns/{{campaignId}}/milestones"
+          }
+        },
+        {
+          "name": "Get Milestone",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/campaigns/{{campaignId}}/milestones/0"
+          }
+        },
+        {
+          "name": "Submit Milestone",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/campaigns/{{campaignId}}/milestones/0/submit",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Survey complete, equipment purchased.\",\n  \"proofUrl\": \"https://example.com/proof.pdf\",\n  \"txHash\": \"0xcccc...\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Vote On Milestone",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/campaigns/{{campaignId}}/milestones/0/vote",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"support\": true,\n  \"txHash\": \"0xdddd...\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Release Milestone",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/campaigns/{{campaignId}}/milestones/0/release",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"txHash\": \"0xeeee...\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reputation",
+      "item": [
+        {
+          "name": "Get Reputation By Address",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/users/{{walletAddress}}/reputation"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:4000/health"
+          }
+        }
+      ]
+    }
+  ]
+}
