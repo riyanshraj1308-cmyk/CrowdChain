@@ -104,7 +104,7 @@ Requires a prior `voteOnMilestone()` contract call; verifies `VoteCast`.
 Body: `{ "txHash": "0x..." }`
 Requires a prior `releaseMilestone()` contract call; verifies `FundsReleased`. The
 smart contract is what actually authorizes and moves funds — this endpoint only
-mirrors a confirmed outcome into Postgres.
+mirrors a confirmed outcome into MongoDB.
 
 ---
 

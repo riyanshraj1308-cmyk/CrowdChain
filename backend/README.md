@@ -2,7 +2,7 @@
 
 A production-style backend for a milestone-based crowdfunding platform. Contributors
 send ETH into a Solidity escrow contract; funds are only released to creators in
-milestone-sized chunks after contributor voting approves them. PostgreSQL is used
+milestone-sized chunks after contributor voting approves them. MongoDB is used
 purely as an indexed, queryable mirror of on-chain state plus off-chain metadata
 (titles, descriptions, images) — **the blockchain is always the source of truth for
 money and critical campaign state.**
@@ -24,7 +24,7 @@ Event                         ┌───────────────�
    ↓                          │ Two complementary write paths: │
 Backend Indexer  ◄────────────┤ 1) API endpoints independently │
    ↓                          │    verify a tx hash the client │
-PostgreSQL                    │    reports, before writing.    │
+MongoDB                       │    reports, before writing.    │
    ↓                          │ 2) The polling indexer re-scans │
 Frontend                      │    all logs as an audit trail  │
                                │    and catches anything missed.│
@@ -35,15 +35,15 @@ Every endpoint that could change financial or milestone state (`contribute`,
 `milestone submit/vote/release`) requires the caller to have already sent a real
 transaction to the contract and provide its hash. The backend fetches the receipt,
 confirms it was mined, sent to the correct contract, didn't revert, and emitted the
-expected event — only then does it write to Postgres. **There is no code path where
+expected event — only then does it write to MongoDB. **There is no code path where
 the backend can mark funds released, a vote counted, or a milestone approved
 without a verified on-chain transaction backing it.** No admin key can withdraw
 escrowed funds — that capability simply does not exist in the contract.
 
 ## Tech Stack
 
-- Node.js + TypeScript + Express.js
-- PostgreSQL + Prisma ORM
+- Node.js + JavaScript (ESM) + Express.js
+- MongoDB + Mongoose ODM
 - Solidity 0.8.24 + Hardhat + ethers.js v6
 - JWT (wallet-signature authentication, no passwords, no stored private keys)
 - Zod for request validation
@@ -54,29 +54,29 @@ escrowed funds — that capability simply does not exist in the contract.
 ```
 backend/
 ├── src/
-│   ├── config/            env loading, Prisma client
+│   ├── config/            env loading, Mongoose connection
+│   ├── models/            Mongoose schemas (User, Campaign, Milestone, ...)
 │   ├── controllers/       thin HTTP handlers
 │   ├── routes/             route wiring
 │   ├── services/           business logic (DB + on-chain verification)
 │   ├── middleware/        auth, validation, rate limiting, error handling
 │   ├── validators/        Zod schemas
 │   ├── blockchain/
-│   │   ├── contracts/     deployment info written by scripts/deploy.ts
+│   │   ├── contracts/     deployment info written by scripts/deploy.js
 │   │   ├── listeners/     polling event indexer
-│   │   └── provider.ts    ethers provider/contract factory
+│   │   └── provider.js    ethers provider/contract factory
 │   ├── utils/
-│   ├── app.ts
-│   └── server.ts
+│   ├── app.js
+│   └── server.js
 ├── contracts/
 │   └── Crowdfunding.sol
 ├── scripts/
-│   ├── deploy.ts
-│   └── seed-demo.ts        full end-to-end demo flow
+│   ├── deploy.js
+│   └── seed-demo.js        full end-to-end demo flow
 ├── test/
 │   ├── contract/           Hardhat/Chai tests
 │   └── api/                Jest/Supertest tests
-├── prisma/schema.prisma
-├── hardhat.config.ts
+├── hardhat.config.js
 ├── .env.example
 ├── API_DOCUMENTATION.md
 └── postman_collection.json
@@ -85,7 +85,7 @@ backend/
 ## Prerequisites
 
 - Node.js 18+
-- PostgreSQL 14+ running locally (or a connection string to one)
+- MongoDB 6+ running locally (or a connection string to one)
 - npm
 
 ## Setup
@@ -93,10 +93,10 @@ backend/
 ```bash
 npm install
 cp .env.example .env
-# edit .env: set DATABASE_URL to your Postgres instance, set JWT_SECRET
+# edit .env: set MONGODB_URI to your MongoDB instance, set JWT_SECRET
 
-npx prisma migrate dev --name init
-npx prisma generate
+# MongoDB creates collections and indexes automatically on first write —
+# no migration step is needed.
 ```
 
 ## Running locally (four terminals)
@@ -107,14 +107,14 @@ npx hardhat node
 
 # Terminal 2 — compile & deploy the contract to it
 npx hardhat compile
-npx hardhat run scripts/deploy.ts --network localhost
+npx hardhat run scripts/deploy.js --network localhost
 # This writes src/blockchain/contracts/Crowdfunding.latest.json,
 # which the backend reads automatically — no manual address copying needed.
 
 # Terminal 3 — backend API
 npm run dev
 
-# Terminal 4 — event indexer (keeps Postgres reconciled with chain state)
+# Terminal 4 — event indexer (keeps MongoDB reconciled with chain state)
 npm run listener
 ```
 
@@ -133,7 +133,7 @@ or import [`postman_collection.json`](./postman_collection.json) into Postman.
 
 ```bash
 npm run test:contract   # Hardhat/Chai smart contract tests
-npm run test:api        # Jest/Supertest backend tests (mocked Prisma + chain calls)
+npm run test:api        # Jest/Supertest backend tests (mocked models + chain calls)
 npm test                # both
 ```
 
@@ -141,7 +141,7 @@ npm test                # both
 
 1. Set `SEPOLIA_RPC_URL` and `DEPLOYER_PRIVATE_KEY` in `.env` (use a throwaway
    testnet-only key — never a real funded key).
-2. `npx hardhat run scripts/deploy.ts --network sepolia`
+2. `npx hardhat run scripts/deploy.js --network sepolia`
 3. Update `.env`: `RPC_URL` to the same Sepolia RPC URL, `CHAIN_ID=11155111`.
 4. Restart the backend and indexer.
 
@@ -208,10 +208,10 @@ complete rewrite"**: config becomes ESM-only (`"type": "module"` and a
 declarative `defineConfig()` with an explicit `plugins: []` array, replacing
 side-effect imports), network connections become explicit and asynchronous
 (`hre.network` is no longer a single always-on connection — code like our
-`ethers.getSigners()` calls in `scripts/deploy.ts` and the test suite would
+`ethers.getSigners()` calls in `scripts/deploy.js` and the test suite would
 need to change), Node.js **v22.10.0+** becomes a hard requirement, and the
 recommended deployment approach shifts from a procedural `hardhat run
-scripts/deploy.ts` script to the declarative Hardhat Ignition system.
+scripts/deploy.js` script to the declarative Hardhat Ignition system.
 
 That's a real, multi-file rewrite of the entire contracts dev workflow, not
 a dependency bump — and I don't have network access in this sandbox to
@@ -237,7 +237,7 @@ Hardhat-2-core cluster documented above.
 - No private keys or seed phrases ever touch the backend — the frontend/user signs
   transactions and messages with their own wallet.
 - Every financial write requires independent verification of a mined transaction
-  and its emitted event against our contract address before Postgres is touched.
+  and its emitted event against our contract address before MongoDB is touched.
 - Creator-only middleware gates milestone submission and campaign edits;
   contributor-only middleware (backed by a confirmed, on-chain-verified
   contribution) gates voting.
@@ -254,5 +254,5 @@ Hardhat-2-core cluster documented above.
 Reputation is recomputed server-side (never client-settable) from indexed on-chain
 facts: completed campaigns, milestone completion rate, contributor participation,
 and rejected-milestone count. The formula lives in a single pure function,
-`computeReputationScore` in `src/services/reputation.service.ts`, so it can be
+`computeReputationScore` in `src/services/reputation.service.js`, so it can be
 unit-tested and swapped out independently of the rest of the system.
