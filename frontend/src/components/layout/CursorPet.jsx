@@ -41,7 +41,7 @@ export default function CursorPet({
   behavior = "Follow Cursor",
   spriteSheet = "/pet-sprite.png",
   size = 48,
-  speed = 13,
+  speed = 14,
   frameRate = 11,
   stopDistance = 20,
   escapeRadius = 140,
