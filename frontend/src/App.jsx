@@ -4,6 +4,7 @@ import Navbar from "./components/layout/Navbar";
 import DataModeBanner from "./components/layout/DataModeBanner";
 import Footer from "./components/layout/Footer";
 import PageTransition from "./components/layout/PageTransition";
+import CursorPet from "./components/layout/CursorPet";
 import Landing from "./pages/Landing";
 import Explore from "./pages/Explore";
 import CampaignDetails from "./pages/CampaignDetails";
@@ -43,6 +44,7 @@ export default function App() {
         </AnimatePresence>
       </main>
       <Footer />
+      <CursorPet />
     </div>
   );
 }
