@@ -5,13 +5,13 @@ import { motion } from "framer-motion";
 const BENEFITS = [
   {
     icon: Lock,
-    title: "Non-custodial by design",
-    description: "Funds never pass through a company account. The smart contract is the only custodian.",
+    title: "Escrow, not a company account",
+    description: "Traditional platforms pool funds in a company account. CrowdChain locks every contribution in a smart contract — no one can move it on a promise.",
   },
   {
     icon: Eye,
-    title: "Fully auditable on-chain",
-    description: "Every contribution, vote, and release is a public transaction anyone can verify.",
+    title: "Funds unlock on proof, not promises",
+    description: "Money is released milestone by milestone, only after contributors vote that the submitted work is real. Every vote is a public, on-chain record.",
   },
   {
     icon: TrendingUp,
@@ -31,10 +31,10 @@ export default function PlatformBenefits() {
       <div className="container-page">
         <Reveal className="max-w-xl">
           <span className="text-xs font-semibold uppercase tracking-wide text-copper-500">
-            Why Groundwork
+            Why CrowdChain
           </span>
           <h2 className="mt-2 text-3xl text-ink-950 sm:text-4xl">
-            Built for accountability, not just fundraising.
+            How this differs from traditional crowdfunding.
           </h2>
         </Reveal>
 

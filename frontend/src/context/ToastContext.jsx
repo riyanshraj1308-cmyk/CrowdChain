@@ -48,7 +48,7 @@ export function ToastProvider({ children }) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.98, transition: { duration: 0.12 } }}
               transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              className="flex items-start gap-3 rounded-md border border-ink-950/10 bg-ink-950 px-4 py-3 text-paper-50 shadow-lifted"
+              className="panel-ink flex items-start gap-3 rounded-md border border-ink-950/10 bg-ink-950 px-4 py-3 text-paper-50 shadow-lifted"
             >
               <IconFor type={t.type} />
               <p className="flex-1 text-sm leading-snug">{t.message}</p>

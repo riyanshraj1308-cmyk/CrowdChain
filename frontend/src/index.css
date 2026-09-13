@@ -2,9 +2,124 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Theming
+ * -------
+ * Every Tailwind color in tailwind.config.js maps to one of these variables
+ * (stored as raw R G B channel triplets so opacity modifiers like
+ * `bg-ink-950/50` keep working). `html.dark` re-points the same variables at
+ * the dark palette — no component needs to know which theme is active.
+ *
+ * The variables are flipped in two places:
+ *   1. index.html — an inline pre-hydration script applies the persisted
+ *      (or OS-preferred) theme before first paint, so there is no flash.
+ *   2. ThemeContext — toggling at runtime updates the class + localStorage.
+ */
+:root {
+  color-scheme: light;
+
+  --paper-50: 253 252 249;
+  --paper-100: 250 247 240;
+  --paper-200: 243 237 224;
+
+  --ink-950: 18 17 16;
+  --ink-900: 27 25 24;
+  --ink-800: 40 37 31;
+  --ink-700: 58 54 48;
+  --ink-600: 82 76 67;
+  --ink-500: 107 100 89;
+  --ink-400: 139 131 117;
+  --ink-300: 176 168 150;
+  --ink-200: 211 203 184;
+  --ink-100: 233 227 211;
+
+  /* FLUX violet ramp (rendered through the copper-* token names so every
+     existing accent utility — underlines, badges, progress bars, focus
+     borders — inherits the studio violet without touching components). */
+  --copper-50: 243 240 255;
+  --copper-100: 228 223 255;
+  --copper-200: 205 196 255;
+  --copper-300: 169 155 255;
+  --copper-400: 147 130 255;
+  --copper-500: 124 108 255;
+  --copper-600: 105 89 230;
+  --copper-700: 88 72 200;
+  --copper-800: 74 59 172;
+
+  --moss-50: 238 243 234;
+  --moss-100: 214 228 204;
+  --moss-400: 92 138 70;
+  --moss-500: 63 107 46;
+  --moss-600: 50 86 35;
+
+  /* FLUX violet accent (theme-aware: brighter on dark surfaces). */
+  --violet: 124 108 255;
+  --violet-300: 169 155 255;
+
+  --rust-50: 251 237 234;
+  --rust-400: 198 84 61;
+  --rust-500: 174 64 44;
+  --rust-600: 143 52 35;
+
+  --amber-50: 251 243 227;
+  --amber-400: 201 147 46;
+  --amber-500: 166 121 31;
+}
+
+html.dark {
+  color-scheme: dark;
+
+  /* Deep warm charcoal surfaces, slightly lifted per step. */
+  --paper-50: 12 11 10;
+  --paper-100: 22 20 18;
+  --paper-200: 31 28 25;
+
+  /* "Ink" becomes the light text ramp — every text-* and border-* utility
+     keeps its relative contrast without component changes. */
+  --ink-950: 242 237 228;
+  --ink-900: 226 219 206;
+  --ink-800: 199 191 174;
+  --ink-700: 168 160 142;
+  --ink-600: 140 132 116;
+  --ink-500: 114 107 93;
+  --ink-400: 92 86 74;
+  --ink-300: 70 65 57;
+  --ink-200: 50 46 41;
+  --ink-100: 35 32 28;
+
+  /* Copper warms up a touch for dark backgrounds; the hover step (600) is
+     intentionally lighter than the rest state, per dark-theme convention. */
+  --copper-50: 34 28 56;
+  --copper-100: 44 37 72;
+  --copper-200: 205 196 255;
+  --copper-300: 186 175 255;
+  --copper-400: 164 150 255;
+  --copper-500: 151 138 255;
+  --copper-600: 172 160 255;
+  --copper-700: 192 182 255;
+  --copper-800: 210 202 255;
+
+  --moss-50: 22 30 18;
+  --moss-100: 30 42 24;
+  --moss-400: 118 165 94;
+  --moss-500: 96 150 72;
+  --moss-600: 116 166 90;
+
+  --rust-50: 42 24 20;
+  --rust-400: 226 110 88;
+  --rust-500: 216 96 72;
+  --rust-600: 230 122 98;
+
+  --amber-50: 43 34 18;
+  --amber-400: 226 172 70;
+  --amber-500: 212 158 60;
+
+  --violet: 151 138 255;
+  --violet-300: 186 175 255;
+}
+
 @layer base {
   html {
-    scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
   }
 
@@ -21,13 +136,13 @@
   /* Visible, consistent focus ring across the whole app — never removed. */
   :focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(183, 91, 18, 0.4);
+    box-shadow: 0 0 0 3px rgba(124, 108, 255, 0.4);
     border-radius: 6px;
   }
 
   ::selection {
-    background-color: #F0C393;
-    color: #1B1918;
+    background-color: rgba(124, 108, 255, 0.32);
+    color: inherit;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -40,9 +155,100 @@
   }
 }
 
+/*
+ * Lenis smooth scrolling (root mode adds .lenis classes to <html>).
+ * Native `scroll-behavior: smooth` is intentionally NOT set — Lenis owns it.
+ */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+/* Lenis default disables pointer events on iframes (scroll hijack guard);
+ * our ThreeUI glass CTA lives in an iframe and needs hover/click, so
+ * re-enable it just for the shader stage. */
+.lenis.lenis-smooth .shader-frame iframe {
+  pointer-events: auto;
+}
+
 @layer utilities {
+  /*
+   * Always-dark panel. Some surfaces are designed as dark showpieces (the
+   * glass-CTA card, the footer, escrow cards, dark sections). In dark mode
+   * the theme tokens flip, which would invert these panels into light
+   * surfaces — so this utility re-pins the variables to their light-theme
+   * values INSIDE the panel. Everything inside keeps using the same token
+   * classes and renders exactly as it does in light mode.
+   */
+  .panel-ink {
+    --paper-50: 253 252 249;
+    --paper-100: 250 247 240;
+    --paper-200: 243 237 224;
+
+    --ink-950: 18 17 16;
+    --ink-900: 27 25 24;
+    --ink-800: 40 37 31;
+    --ink-700: 58 54 48;
+    --ink-600: 82 76 67;
+    --ink-500: 107 100 89;
+    --ink-400: 139 131 117;
+    --ink-300: 176 168 150;
+    --ink-200: 211 203 184;
+    --ink-100: 233 227 211;
+
+    --copper-500: 124 108 255;
+    --copper-600: 105 89 230;
+
+    --moss-400: 92 138 70;
+    --moss-500: 63 107 46;
+
+    --amber-400: 201 147 46;
+
+    /* Violet keeps its light-mode value inside always-dark panels. */
+    --violet: 124 108 255;
+    --violet-300: 169 155 255;
+  }
+
   .container-page {
     @apply mx-auto w-full max-w-content px-5 sm:px-8 lg:px-10;
+  }
+
+  /*
+   * FLUX page wash — the shared studio atmosphere for every tab: a soft
+   * violet light entering from the top-right and pooling at the bottom-left,
+   * over the theme's own paper. Panels/cards sit on top of it unchanged.
+   */
+  .page-flux {
+    background:
+      radial-gradient(ellipse 70% 50% at 82% -10%, rgba(124, 108, 255, 0.09), transparent 60%),
+      radial-gradient(ellipse 55% 42% at 8% 104%, rgba(124, 108, 255, 0.07), transparent 62%),
+      rgb(var(--paper-50));
+  }
+
+  html.dark .page-flux {
+    background:
+      radial-gradient(ellipse 70% 50% at 82% -10%, rgba(124, 108, 255, 0.14), transparent 60%),
+      radial-gradient(ellipse 55% 42% at 8% 104%, rgba(124, 108, 255, 0.10), transparent 62%),
+      rgb(var(--paper-50));
+  }
+
+  /*
+   * Sizing stage for ThreeUI shader components. The component's iframe fills
+   * 100% of the frame, so set an explicit height where you use it
+   * (e.g. className="shader-frame h-48").
+   */
+  .shader-frame {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
   }
 
   .text-balance {
@@ -57,3 +263,159 @@
     scrollbar-width: none;
   }
 }
+
+/*
+ * NeonCard — the Uiverse.io "pulse card" (by Spacious74), adapted to fluid
+ * size (no fixed 300×250). Always-dark skin: white→black radial border, a
+ * roaming glow dot, a blurred light ray and hairline rules over a dark
+ * radial-gradient face. Content uses literal light colors inside.
+ */
+.uvc {
+  position: relative;
+  border-radius: 10px;
+  padding: 1px;
+  background: radial-gradient(circle 230px at 0% 0%, #ffffff, #0c0d0d);
+}
+
+.uvc-card {
+  z-index: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 9px;
+  border: solid 1px #202222;
+  background: radial-gradient(circle 280px at 0% 0%, #444444, #0c0d0d);
+  background-size: 20px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-direction: column;
+  color: #fff;
+  overflow: hidden;
+}
+
+.uvc-dot {
+  width: 5px;
+  aspect-ratio: 1;
+  position: absolute;
+  background-color: #fff;
+  box-shadow: 0 0 10px #ffffff;
+  border-radius: 100px;
+  z-index: 2;
+  right: 10%;
+  top: 10%;
+  animation: uvc-move-dot 6s linear infinite;
+}
+
+@keyframes uvc-move-dot {
+  0%,
+  100% {
+    top: 10%;
+    right: 10%;
+  }
+  25% {
+    top: 10%;
+    right: calc(100% - 35px);
+  }
+  50% {
+    top: calc(100% - 30px);
+    right: calc(100% - 35px);
+  }
+  75% {
+    top: calc(100% - 30px);
+    right: 10%;
+  }
+}
+
+.uvc-ray {
+  width: 220px;
+  height: 45px;
+  border-radius: 100px;
+  position: absolute;
+  background-color: #c7c7c7;
+  opacity: 0.4;
+  box-shadow: 0 0 50px #fff;
+  filter: blur(10px);
+  transform-origin: 10%;
+  top: 0%;
+  left: 0;
+  transform: rotate(40deg);
+}
+
+.uvc-line {
+  width: 100%;
+  height: 1px;
+  position: absolute;
+  background-color: #2c2c2c;
+  z-index: 2;
+}
+
+.uvc-line-t {
+  top: 10%;
+  background: linear-gradient(90deg, #888888 30%, #1d1f1f 70%);
+}
+
+.uvc-line-b {
+  bottom: 10%;
+}
+
+.uvc-line-l {
+  left: 10%;
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(180deg, #747474 30%, #222424 70%);
+}
+
+.uvc-line-r {
+  right: 10%;
+  width: 1px;
+  height: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .uvc-dot {
+    animation: none;
+  }
+}
+
+/*
+ * Full-page Auralis backdrop for inner tabs. The WebGL field is fixed behind
+ * the whole page (not just the header band); the page content above it fades
+ * from transparent at the hero into the theme paper, so the ember shows at
+ * full strength behind the PageHero and shimmers faintly behind the rest.
+ */
+.tab-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.tab-bg > div {
+  height: 100%;
+}
+
+.tab-bg canvas {
+  pointer-events: none;
+}
+
+.tab-content {
+  position: relative;
+  z-index: 1;
+  /* Transparent through the hero band so the backdrop shows at full
+   * strength, then the theme paper ramps in quickly below it. */
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0) 400px,
+    rgb(var(--paper-50) / 0.9) 560px,
+    rgb(var(--paper-50) / 0.95) 720px,
+    rgb(var(--paper-50) / 0.97) 100%
+  );
+}
+
+/*
+ * (BackgroundPaths washes live in flux.css as .fx-paths-layer — theme-aware
+ * via the .fx custom properties.)
+ */

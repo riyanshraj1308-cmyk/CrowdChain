@@ -1,67 +1,41 @@
 /** @type {import('tailwindcss').Config} */
+
+// Each palette step lives in index.css as a "R G B" channel triplet so that
+// Tailwind's alpha modifier (e.g. `bg-ink-950/50`) compiles to
+// `rgb(var(--ink-950) / 0.5)` and follows the active theme.
+const v = (name) => `rgb(var(--${name}) / <alpha-value>)`;
+
+const ramp = (prefix, steps) =>
+  Object.fromEntries(steps.map((s) => [s, v(`${prefix}-${s}`)]));
+
 export default {
   content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
     extend: {
       colors: {
         // Warm, ink-based neutral scale (not the default cool gray) — the
-        // backbone of the UI. "ink" = near-black text/surfaces, "paper" = warm
-        // off-white backgrounds.
-        ink: {
-          950: "#121110",
-          900: "#1B1918",
-          800: "#28251F",
-          700: "#3A3630",
-          600: "#524C43",
-          500: "#6B6459",
-          400: "#8B8375",
-          300: "#B0A896",
-          200: "#D3CBB8",
-          100: "#E9E3D3",
-        },
-        paper: {
-          50: "#FDFCF9",
-          100: "#FAF7F0",
-          200: "#F3EDE0",
-        },
-        // Copper — the single confident accent color. Used sparingly for
-        // primary actions, links, and key data points. Never washed with
-        // purple/blue "AI gradient" tones.
-        copper: {
-          50: "#FCF1E7",
-          100: "#F8E1C9",
-          200: "#F0C393",
-          300: "#E4A05F",
-          400: "#D3823C",
-          500: "#B75B12",
-          600: "#9A4A0E",
-          700: "#7C3B0C",
-          800: "#5E2C09",
-        },
+        // backbone of the UI. "ink" = near-black text/surfaces in light mode,
+        // flipped to the light text ramp in dark mode; "paper" = warm
+        // off-white backgrounds, deep charcoal in dark mode.
+        ink: ramp("ink", [950, 900, 800, 700, 600, 500, 400, 300, 200, 100]),
+        paper: ramp("paper", [50, 100, 200]),
+        // "Copper" token ramp now renders the FLUX violet — the single
+        // confident accent. Used sparingly for primary actions, links, and
+        // key data points. Never washed with multi-stop "AI gradient" tones.
+        copper: ramp("copper", [50, 100, 200, 300, 400, 500, 600, 700, 800]),
+        // Violet — the FLUX accent. Primary CTAs, active nav, kicker rules.
+        violet: { DEFAULT: v("violet"), 300: v("violet-300"), 500: v("violet") },
         // Moss — the "approved / success / funded" signal color. A deep,
         // desaturated green that reads as trustworthy rather than neon.
-        moss: {
-          50: "#EEF3EA",
-          100: "#D6E4CC",
-          400: "#5C8A46",
-          500: "#3F6B2E",
-          600: "#325623",
-        },
+        moss: ramp("moss", [50, 100, 400, 500, 600]),
         // Signal red for destructive/rejected/error states.
-        rust: {
-          50: "#FBEDEA",
-          400: "#C6543D",
-          500: "#AE402C",
-          600: "#8F3423",
-        },
-        amber: {
-          50: "#FBF3E3",
-          400: "#C9932E",
-          500: "#A6791F",
-        },
+        rust: ramp("rust", [50, 400, 500, 600]),
+        amber: ramp("amber", [50, 400, 500]),
       },
       fontFamily: {
-        display: ["Fraunces", "ui-serif", "Georgia", "serif"],
+        // FLUX identity: Plus Jakarta Sans for display/headings, Inter for
+        // body, IBM Plex Mono for kickers and meta.
+        display: ["Plus Jakarta Sans", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
         sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
         mono: ["IBM Plex Mono", "ui-monospace", "SFMono-Regular", "monospace"],
       },
@@ -89,7 +63,7 @@ export default {
         sm: "0 1px 3px 0 rgba(18,17,16,0.06), 0 1px 2px -1px rgba(18,17,16,0.06)",
         card: "0 2px 8px -2px rgba(18,17,16,0.08), 0 1px 2px -1px rgba(18,17,16,0.04)",
         lifted: "0 12px 32px -8px rgba(18,17,16,0.16), 0 4px 12px -4px rgba(18,17,16,0.08)",
-        focus: "0 0 0 3px rgba(183,91,18,0.35)",
+        focus: "0 0 0 3px rgba(124,108,255,0.35)",
       },
       maxWidth: {
         content: "1280px",

@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 const TESTIMONIALS = [
   {
     quote:
-      "We've run two campaigns on Groundwork now. Knowing contributors verify each stage keeps our own team honest about scope and timelines.",
+      "We've run two campaigns on CrowdChain now. Knowing contributors verify each stage keeps our own team honest about scope and timelines.",
     name: "Amara Okafor",
     role: "Founder, Kitui Water Initiative",
   },

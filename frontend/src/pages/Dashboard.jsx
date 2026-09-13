@@ -5,11 +5,14 @@ import { api } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import Tabs from "../components/ui/Tabs";
 import Button from "../components/ui/Button";
+import PageHero from "../components/ui/PageHero";
+import NeonCard from "../components/ui/NeonCard";
 import Badge, { statusVariant } from "../components/ui/Badge";
 import { StatCard, EmptyState } from "../components/ui/EmptyState";
 import CampaignGrid from "../components/campaign/CampaignGrid";
 import ProgressBar from "../components/ui/ProgressBar";
 import Reveal from "../components/ui/Reveal";
+import GlassCTABanner from "../components/ui/GlassCTABanner";
 import { formatEth, formatDate, percentFunded, shortAddress } from "../lib/format";
 
 export default function Dashboard() {
@@ -62,18 +65,22 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="container-page py-10 sm:py-14">
-      <Reveal>
-        <h1 className="text-3xl text-ink-950 sm:text-4xl">Dashboard</h1>
-        <p className="mt-2 text-ink-600">Signed in as {shortAddress(address)}</p>
-      </Reveal>
+    <div className="tab-content">
+      <PageHero kicker="Your studio" title="Dashboard">
+        Signed in as {shortAddress(address)} — your campaigns, contributions, and the votes waiting
+        on you, all in one place.
+      </PageHero>
 
-      <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="container-page mt-8 grid grid-cols-2 gap-4 py-6 sm:grid-cols-4 sm:py-8">
         <StatCard icon={Rocket} label="Campaigns launched" value={myCampaigns.length} />
         <StatCard icon={Coins} label="Total raised" value={`${totalRaisedAcrossCreated.toFixed(2)} ETH`} />
         <StatCard icon={Coins} label="Total contributed" value={`${totalContributed.toFixed(2)} ETH`} />
         <StatCard icon={Vote} label="Votes awaiting you" value={pendingVotes.length} />
       </div>
+
+      <Reveal className="mt-16">
+        <GlassCTABanner />
+      </Reveal>
 
       <div className="mt-10">
         <Tabs
@@ -126,20 +133,20 @@ export default function Dashboard() {
 
           {tab === "votes" &&
             (pendingVotes.length ? (
-              <ul className="flex flex-col gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 {pendingVotes.map((c) => (
-                  <li key={c.id} className="flex items-center justify-between gap-4 rounded-lg border border-amber-400/40 bg-amber-50/40 p-5">
-                    <div>
+                  <NeonCard key={c.id}>
+                    <div className="flex w-full flex-col gap-4 p-5 text-left">
                       <Badge variant="amber">Voting open</Badge>
-                      <p className="mt-2 font-display text-lg text-ink-950">{c.campaign.title}</p>
-                      <p className="text-sm text-ink-600">A milestone needs your approval vote.</p>
+                      <p className="font-display text-lg text-white">{c.campaign.title}</p>
+                      <p className="text-sm text-white/60">A milestone needs your approval vote.</p>
+                      <Button as={Link} to={`/campaigns/${c.campaign.id}`} variant="accent" icon={Vote}>
+                        Review & Vote
+                      </Button>
                     </div>
-                    <Button as={Link} to={`/campaigns/${c.campaign.id}`} variant="accent" icon={Vote}>
-                      Review & Vote
-                    </Button>
-                  </li>
+                  </NeonCard>
                 ))}
-              </ul>
+              </div>
             ) : (
               <EmptyState icon={Vote} title="Nothing needs your vote right now" description="You're all caught up." />
             ))}

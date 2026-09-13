@@ -1,30 +1,63 @@
-import {
-  startTransition,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 /**
- * CursorPet — a pixel-art companion that roams the whole page.
+ * CursorPet — a pixel-art companion that roams the page like it lives there.
  *
  * Reads an 8x4 sprite sheet (grid of 246x246 cells at /pet-sprite.png):
  *   row 0: idle / groom / sleep   row 1: N,S,E,W walk (2-frame pairs)
  *   row 2: diagonals (2-frame pairs, leap/pounce poses)
  *   row 3: edge scratches
  *
- * Follows the cursor, idles with antics, and bursts hearts when clicked.
+ * Ground rules that make it feel part of the page (not an overlay):
+ *  - Components are boundaries. Text, buttons, links, inputs, media and any
+ *    [data-pet-block] region are obstacles: the pet slides along their edges
+ *    instead of crossing them (axis-separated movement, wall-slide style).
+ *  - On the landing page it stays off-screen until the first scroll, then
+ *    walks in from the bottom edge. On every other page it is present.
+ *  - Scrolling leaves it behind: the page's motion drags the pet with the
+ *    content, and it trots back to the cursor once scrolling settles.
  */
 
 const SPRITE_COLS = 8;
 const SPRITE_ROWS = 4;
 
+// Everything the pet treats as a wall. Content boxes (text, controls, media)
+// and explicit [data-pet-block] regions. Plain empty layout containers stay
+// walkable — otherwise the pet could never move at all.
+const BLOCK_SELECTOR = [
+  "[data-pet-block]",
+  "a",
+  "button",
+  "input",
+  "textarea",
+  "select",
+  "label",
+  "summary",
+  "[role='button']",
+  "[role='menuitem']",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "p",
+  "li",
+  "blockquote",
+  "pre",
+  "code",
+  "figcaption",
+  "img",
+  "video",
+  "iframe",
+  "svg",
+  "canvas",
+  "table",
+  "progress",
+].join(",");
+
 // Octant names for movement angles (screen coords, y grows downward).
-// atan2(ny, nx) = 0 is due east; PI/2 is south (down); -PI/2 is north (up).
-// Index = round(angle / (PI/4)) + 4, so slot 0 is west (angle -PI) and
-// slot 8 is west again (angle +PI) — the duplicate ends the wraparound.
 const OCTANTS = [
   "west", // -PI
   "northwest", // -3PI/4
@@ -37,60 +70,165 @@ const OCTANTS = [
   "west", // +PI (same as -PI)
 ];
 
+// How far outside the viewport the pet may sit while walking in / waiting.
+const MARGIN = 72;
+
+// Routes where the pet never appears.
+const EXCLUDED_PATHS = ["/deepfield"];
+
 export default function CursorPet({
   behavior = "Follow Cursor",
   spriteSheet = "/pet-sprite.png",
   size = 48,
   speed = 14,
   frameRate = 11,
-  stopDistance = 20,
+  stopDistance = 26,
   escapeRadius = 140,
   idleAnticsChance = 6,
-  clampToViewport = true,
   pixelSnap = true,
   showHearts = true,
   particleCharacter = "❤",
   particleColour = "#FF4F81",
   particleAmount = 10,
   particleSize = 18,
+  // On the landing page the pet only enters after the first scroll.
+  enterOnScrollOnLanding = true,
 }) {
-  const rootRef = useRef(null);
-  const rafRef = useRef(0);
+  const location = useLocation();
+  const onLanding = location.pathname === "/";
+  // Motion-sensitive users get a still companion: the pet renders parked in
+  // a corner (clickable for hearts) but never roams.
+  const [reducedMotion, setReducedMotion] = useState(false);
+  // The pet lives in the Groundwork app, not on the chrome-free showcase
+  // page (its whole surface is content-boundary there anyway).
+  const excluded = EXCLUDED_PATHS.includes(location.pathname);
+  const [admitted, setAdmitted] = useState(
+    // Non-landing pages: always present. Landing: wait for the first scroll.
+    !enterOnScrollOnLanding || !onLanding
+  );
+  const [entered, setEntered] = useState(false);
   const [frame, setFrame] = useState({ row: 0, col: 0 });
-  const [petPos, setPetPos] = useState({ x: size / 2, y: size / 2 });
+  const [petPos, setPetPos] = useState({ x: -999, y: -999 });
   const [particles, setParticles] = useState([]);
 
-  const petPosRef = useRef({ x: size / 2, y: size / 2 });
-  const cursorRef = useRef({ x: size / 2, y: size / 2 });
+  const petPosRef = useRef({ x: -999, y: -999 });
+  const cursorRef = useRef({ x: -999, y: -999 });
   const walkStepRef = useRef(0);
   const tickRef = useRef(0);
   const anticsRef = useRef({ type: "none", ticks: 0 });
   const timeoutsRef = useRef([]);
   const particleIdRef = useRef(0);
+  // Scroll "lag": while the page scrolls the pet is carried with the content
+  // (offset grows opposite to the scroll direction), then it catches up.
+  const graceRef = useRef(0);
+  const lagRef = useRef(0);
+  // Hysteresis: remembered escape destination + polite-wait timer, so the
+  // pet doesn't recompute a fresh escape every tick and jitter in place.
+  const escapeTargetRef = useRef(null);
+  const restRef = useRef(0);
+  // Obstacle probe lives in a ref so effects can call the freshest logic
+  // without re-running when it changes identity between renders.
+  const isBlockedRef = useRef(() => false);
+  const lastScrollYRef = useRef(0);
+  const seenCursorRef = useRef(false);
 
-  const spriteSrc = useMemo(() => {
-    if (typeof spriteSheet === "string") return spriteSheet;
-    if (spriteSheet && typeof spriteSheet.src === "string")
-      return spriteSheet.src;
-    return "/pet-sprite.png";
-  }, [spriteSheet]);
+  const spriteSrc =
+    typeof spriteSheet === "string"
+      ? spriteSheet
+      : spriteSheet && typeof spriteSheet.src === "string"
+      ? spriteSheet.src
+      : "/pet-sprite.png";
 
-  const setFrameSafe = useCallback((row, col) => {
-    startTransition(() => setFrame({ row, col }));
-  }, []);
+  // ── Admission gate ───────────────────────────────────────────────────────
+  // Excluded routes: never. Landing: only after the first scroll. Anywhere
+  // else: immediately (the pet already "lives" on the site).
+  useEffect(() => {
+    if (excluded) {
+      setAdmitted(false);
+      return;
+    }
+    if (!enterOnScrollOnLanding || !onLanding) {
+      setAdmitted(true);
+      return;
+    }
+    let admittedHere = false;
+    const admit = () => {
+      if (admittedHere) return;
+      admittedHere = true;
+      setAdmitted(true);
+      window.removeEventListener("scroll", admit, true);
+      window.removeEventListener("wheel", admit, true);
+      window.removeEventListener("touchmove", admit, true);
+    };
+    // Lenis drives native scroll, so a scroll listener catches it; wheel and
+    // touchmove cover edge cases (e.g. momentum before the first event).
+    window.addEventListener("scroll", admit, true);
+    window.addEventListener("wheel", admit, true);
+    window.addEventListener("touchmove", admit, true);
+    return () => {
+      window.removeEventListener("scroll", admit, true);
+      window.removeEventListener("wheel", admit, true);
+      window.removeEventListener("touchmove", admit, true);
+    };
+  }, [onLanding, enterOnScrollOnLanding, excluded]);
 
-  const classifyDirection = useCallback((nx, ny) => {
-    // Full 8-direction movement via angle octants.
+  // Reduced motion: park it in the bottom-left corner — fully visible and
+  // clickable, but it never roams (the movement loop is gated off).
+  useEffect(() => {
+    if (!admitted || !reducedMotion) return;
+    const park = { x: MARGIN + size, y: window.innerHeight - MARGIN - size };
+    petPosRef.current = park;
+    setPetPos(park);
+    setEntered(true);
+  }, [admitted, reducedMotion, size]);
+
+  // Spawn once admitted: trot in from just below the bottom edge, through a
+  // gap that isn't itself occupied by content.
+  useEffect(() => {
+    if (!admitted || entered || reducedMotion) return;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const candidates = [0.68, 0.5, 0.32, 0.85, 0.15].map((f) => ({
+      x: Math.round(w * f),
+      y: h + MARGIN,
+    }));
+    const startY = h - MARGIN - 1;
+    const start =
+      candidates.find((c) => !isBlockedRef.current(c.x, startY)) ||
+      candidates[0];
+    petPosRef.current = start;
+    setPetPos(start);
+    // Short grace so the walk-in never reads as content-crossing, but the
+    // wall rules can't freeze it right at the viewport edge.
+    graceRef.current = 12;
+    if (!seenCursorRef.current) {
+      // Park the attractor somewhere open — scan the middle band bottom-up
+      // (open space tends to live below content-dense heroes).
+      let parked = null;
+      for (let fy = 0.82; fy >= 0.3 && !parked; fy -= 0.06) {
+        for (const fx of [0.5, 0.35, 0.65, 0.2, 0.8]) {
+          if (!isBlockedRef.current(fx * w, fy * h)) {
+            parked = { x: fx * w, y: fy * h };
+            break;
+          }
+        }
+      }
+      cursorRef.current = parked || { x: w * 0.5, y: h - MARGIN * 2 };
+    }
+    // Fade in fast so the walk-in from the edge is actually visible.
+    const t = window.setTimeout(() => setEntered(true), 250);
+    return () => window.clearTimeout(t);
+  }, [admitted, entered, reducedMotion]);
+
+  const setFrameSafe = (row, col) => setFrame({ row, col });
+
+  const classifyDirection = (nx, ny) => {
     const oct = Math.round(Math.atan2(ny, nx) / (Math.PI / 4));
     return OCTANTS[oct + 4];
-  }, []);
+  };
 
-  const directionFrame = useCallback((dir, step) => {
+  const directionFrame = (dir, step) => {
     const walk = step % 2;
-    // Row 1: (c0,c1)=north, (c2,c3)=south, (c4,c5)=east, (c6,c7)=west.
-    // Row 2 (verified via pink-ear/muzzle side): (c0,c1)=northeast,
-    // (c2,c3)=northwest, (c4,c5)=southeast, (c6,c7)=southwest —
-    // each a 2-frame stride/pounce pair.
     const map = {
       north: { row: 1, col: 0 },
       south: { row: 1, col: 2 },
@@ -103,29 +241,41 @@ export default function CursorPet({
     };
     const entry = map[dir];
     return { row: entry.row, col: entry.col + walk };
-  }, []);
+  };
 
-  const clamp = useCallback(
-    (x, y) => {
-      if (clampToViewport && typeof window !== "undefined") {
-        return {
-          x: Math.max(size / 2, Math.min(window.innerWidth - size / 2, x)),
-          y: Math.max(size / 2, Math.min(window.innerHeight - size / 2, y)),
-        };
+  // ── Obstacle sensing ─────────────────────────────────────────────────────
+  // A point is "blocked" when the page element visually under it is content
+  // the pet must treat as a wall. Our own overlay elements are ignored.
+  // Probed at center plus a ring matching the cat's visible body (the 48px
+  // sprite cell has transparent padding), so the animal itself — not just its
+  // bounding box — never crosses text or components.
+  const PROBE_RADIUS = Math.max(12, size * 0.32);
+  const PROBES = [
+    [0, 0],
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1],
+  ];
+
+  isBlockedRef.current = (x, y, centerOnly = false) => {
+    const probes = centerOnly ? PROBES.slice(0, 1) : PROBES;
+    for (const [ox, oy] of probes) {
+      const px = x + ox * PROBE_RADIUS;
+      const py = y + oy * PROBE_RADIUS;
+      if (px < MARGIN || px > window.innerWidth - MARGIN) return true;
+      if (py < MARGIN || py > window.innerHeight - MARGIN) return true;
+      const stack = document.elementsFromPoint(px, py);
+      let blockedHere = true; // empty stack = treated as walled
+      for (const el of stack) {
+        if (el.closest("[data-pet-root]")) continue;
+        blockedHere = Boolean(el.closest(BLOCK_SELECTOR));
+        break;
       }
-      return { x, y };
-    },
-    [clampToViewport, size],
-  );
-
-  const setPetPosSafe = useCallback(
-    (x, y) => {
-      const next = clamp(x, y);
-      petPosRef.current = next;
-      startTransition(() => setPetPos(next));
-    },
-    [clamp],
-  );
+      if (blockedHere) return true;
+    }
+    return false;
+  };
 
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -138,20 +288,42 @@ export default function CursorPet({
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(mq.matches);
+    const onChange = (e) => setReducedMotion(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
     const handleMove = (event) => {
       cursorRef.current = { x: event.clientX, y: event.clientY };
+      seenCursorRef.current = true;
     };
     window.addEventListener("mousemove", handleMove);
     return () => window.removeEventListener("mousemove", handleMove);
   }, []);
 
+  // Track scroll velocity → the pet gets "left behind" while the page moves.
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    lastScrollYRef.current = window.scrollY;
+    const onScroll = () => {
+      const delta = window.scrollY - lastScrollYRef.current;
+      lastScrollYRef.current = window.scrollY;
+      // Content moving up (scrolling down) drags the pet downward.
+      lagRef.current = Math.max(-260, Math.min(260, lagRef.current + delta * 0.75));
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!admitted || reducedMotion) return;
     const targetMs = 1000 / Math.max(1, frameRate);
     let last = 0;
+    let raf = 0;
     const loop = (time) => {
-      rafRef.current = window.requestAnimationFrame(loop);
+      raf = window.requestAnimationFrame(loop);
       if (time - last < targetMs) return;
       last = time;
       tickRef.current += 1;
@@ -217,7 +389,12 @@ export default function CursorPet({
         setFrameSafe(0, 0);
       };
 
-      const target = cursorRef.current;
+      // Ease the scroll-lag back to zero — this is the pet "catching up".
+      lagRef.current *= 0.9;
+      const lag = Math.abs(lagRef.current) < 1 ? 0 : lagRef.current;
+
+      const rawTarget = cursorRef.current;
+      const target = { x: rawTarget.x, y: rawTarget.y + lag };
       const dx = target.x - petPosRef.current.x;
       const dy = target.y - petPosRef.current.y;
       const dist = Math.hypot(dx, dy);
@@ -226,7 +403,35 @@ export default function CursorPet({
         updateIdle();
         return;
       }
-      if (dist <= stopDistance) {
+      const standingOnContent = isBlockedRef.current(
+        petPosRef.current.x,
+        petPosRef.current.y,
+        true
+      );
+      const bodyFree = !isBlockedRef.current(petPosRef.current.x, petPosRef.current.y);
+      if (bodyFree && escapeTargetRef.current) escapeTargetRef.current = null;
+
+      // Waiting politely: when the cursor sits on content the pet cannot
+      // cross, it walks to the nearest free edge and rests there for a
+      // while instead of jittering against the wall.
+      if (restRef.current > 0) {
+        restRef.current -= 1;
+        updateIdle();
+        return;
+      }
+      const targetBlocked = isBlockedRef.current(target.x, target.y);
+      if (
+        bodyFree &&
+        !standingOnContent &&
+        (dist <= stopDistance || (targetBlocked && dist < 90))
+      ) {
+        restRef.current = 50; // ~4.5s, then it tries again
+        updateIdle();
+        return;
+      }
+      // It may only settle where its WHOLE body is clear of content — that
+      // keeps it from resting half-on a button or text edge.
+      if (dist <= stopDistance && bodyFree && !standingOnContent) {
         updateIdle();
         return;
       }
@@ -238,44 +443,101 @@ export default function CursorPet({
         nx *= -1;
         ny *= -1;
       }
+
+      // Axis-separated movement with wall sliding: try the full step, then
+      // each axis alone, then give up (idle). The pet thus runs along the
+      // edges of text blocks and controls instead of crossing them.
+      // While entering from off-screen — or during the post-spawn grace —
+      // the obstacle rules don't apply, so it can walk in and out from
+      // under content instead of being frozen mid-overlap.
+      const insideX =
+        petPosRef.current.x > MARGIN && petPosRef.current.x < w - MARGIN;
+      const insideY =
+        petPosRef.current.y > MARGIN && petPosRef.current.y < h - MARGIN;
+      const entering = !(insideX && insideY);
+      if (graceRef.current > 0) graceRef.current -= 1;
+      if (entering) graceRef.current = 8; // keep grace while walking in/out
+
+      const stepX = petPosRef.current.x + nx * speed;
+      const stepY = petPosRef.current.y + ny * speed;
+
+      // Escape hatch: if the body sits on content, step to the nearest free
+      // neighbour instead of pushing deeper toward the cursor.
+      let next = null;
+      if (entering || graceRef.current > 0) {
+        next = { x: stepX, y: stepY };
+      } else if (standingOnContent) {
+        // Spiral out for the nearest free point, remember it, and step
+        // toward it until reached (no per-tick re-scan jitter).
+        const dirs = [
+          [0, -1], [0, 1], [-1, 0], [1, 0],
+          [-1, -1], [1, -1], [-1, 1], [1, 1],
+        ];
+        const R = speed * 1.5;
+        let esc = escapeTargetRef.current;
+        if (!esc || isBlockedRef.current(esc.x, esc.y, true)) {
+          esc = null;
+          outer: for (const mult of [1, 2, 3, 5, 8]) {
+            for (const [ox, oy] of dirs) {
+              const px = petPosRef.current.x + ox * R * mult;
+              const py = petPosRef.current.y + oy * R * mult;
+              if (!isBlockedRef.current(px, py)) {
+                esc = { x: px, y: py };
+                break outer;
+              }
+            }
+          }
+          escapeTargetRef.current = esc;
+        }
+        if (esc) {
+          const tdx = esc.x - petPosRef.current.x;
+          const tdy = esc.y - petPosRef.current.y;
+          const td = Math.hypot(tdx, tdy) || 1;
+          const step = Math.min(speed, td);
+          next = {
+            x: petPosRef.current.x + (tdx / td) * step,
+            y: petPosRef.current.y + (tdy / td) * step,
+          };
+        } else {
+          // Densely packed viewport: head for the open bottom band.
+          next = { x: petPosRef.current.x, y: h - MARGIN * 2 };
+        }
+      } else if (!isBlockedRef.current(stepX, stepY)) {
+        next = { x: stepX, y: stepY };
+      } else if (!isBlockedRef.current(stepX, petPosRef.current.y)) {
+        next = { x: stepX, y: petPosRef.current.y };
+      } else if (!isBlockedRef.current(petPosRef.current.x, stepY)) {
+        next = { x: petPosRef.current.x, y: stepY };
+      }
+
+      if (!next) {
+        updateIdle();
+        return;
+      }
+
       walkStepRef.current += 1;
-      const dir = classifyDirection(nx, ny);
+      const moveX = next.x - petPosRef.current.x;
+      const moveY = next.y - petPosRef.current.y;
+      const dir = classifyDirection(moveX, moveY);
       const f = directionFrame(dir, walkStepRef.current);
       setFrameSafe(f.row, f.col);
-      setPetPosSafe(
-        petPosRef.current.x + nx * speed,
-        petPosRef.current.y + ny * speed,
-      );
+
+      petPosRef.current = next;
+      setPetPos(next);
     };
-    rafRef.current = window.requestAnimationFrame(loop);
-    return () => {
-      window.cancelAnimationFrame(rafRef.current);
-    };
+    raf = window.requestAnimationFrame(loop);
+    return () => window.cancelAnimationFrame(raf);
   }, [
+    admitted,
+    reducedMotion,
     behavior,
-    classifyDirection,
-    directionFrame,
     escapeRadius,
     frameRate,
     idleAnticsChance,
-    setFrameSafe,
-    setPetPosSafe,
     size,
     speed,
     stopDistance,
   ]);
-
-  // Center the pet on first mount
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const initial = {
-      x: window.innerWidth / 2,
-      y: window.innerHeight / 2,
-    };
-    petPosRef.current = initial;
-    cursorRef.current = initial;
-    startTransition(() => setPetPos(initial));
-  }, []);
 
   useEffect(() => {
     const timeouts = timeoutsRef.current;
@@ -286,7 +548,7 @@ export default function CursorPet({
     };
   }, []);
 
-  const spawnHearts = useCallback(() => {
+  const spawnHearts = () => {
     if (!showHearts || typeof window === "undefined") return;
     const created = Array.from({ length: Math.max(1, particleAmount) }).map(
       () => ({
@@ -296,32 +558,34 @@ export default function CursorPet({
         dx: Math.random() * 100 - 50,
         dy: -(30 + Math.random() * 90),
         rot: Math.random() * 90 - 45,
-      }),
+      })
     );
-    startTransition(() => setParticles((prev) => [...prev, ...created]));
+    setParticles((prev) => [...prev, ...created]);
     created.forEach((p) => {
       const t = window.setTimeout(() => {
-        startTransition(() =>
-          setParticles((prev) => prev.filter((item) => item.id !== p.id)),
-        );
+        setParticles((prev) => prev.filter((item) => item.id !== p.id));
       }, 1050);
       timeoutsRef.current.push(t);
     });
-  }, [particleAmount, showHearts]);
+  };
 
-  const onPetClick = useCallback(() => {
+  const onPetClick = () => {
     spawnHearts();
-  }, [spawnHearts]);
+  };
+
+  if (!admitted || excluded) return null;
 
   return (
     <div
-      ref={rootRef}
-      aria-hidden
+      data-pet-root
+      aria-hidden={false}
       style={{
         position: "fixed",
         inset: 0,
         pointerEvents: "none",
-        zIndex: 99999,
+        // Below toasts/modals/mobile-menu (z-50+) so the pet reads as part of
+        // the page, sliding under real chrome instead of floating over it.
+        zIndex: 45,
       }}
     >
       {particles.map((p) => (
@@ -344,7 +608,7 @@ export default function CursorPet({
             ["--dx"]: `${p.dx}px`,
             ["--dy"]: `${p.dy}px`,
             ["--rot"]: `${p.rot}deg`,
-            zIndex: 100000,
+            zIndex: 46,
           }}
         >
           {particleCharacter}
@@ -367,7 +631,12 @@ export default function CursorPet({
           backgroundSize: `${size * SPRITE_COLS}px ${size * SPRITE_ROWS}px`,
           backgroundPosition: `${-frame.col * size}px ${-frame.row * size}px`,
           imageRendering: pixelSnap ? "pixelated" : "auto",
-          zIndex: 99999,
+          // Grounding shadow + gentle entrance: the pet reads as standing on
+          // the page rather than hovering above it.
+          filter: "drop-shadow(0 7px 5px rgba(8, 6, 4, 0.45))",
+          opacity: entered ? 1 : 0,
+          transition: "opacity 700ms ease",
+          zIndex: 45,
         }}
       />
     </div>

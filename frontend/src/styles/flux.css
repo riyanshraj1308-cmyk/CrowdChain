@@ -1,0 +1,450 @@
+/*
+ * FLUX theme — the studio-site layer for the new home page.
+ *
+ * Type: Plus Jakarta Sans (wordmark / H1 / buttons), Inter (body / links),
+ * IBM Plex Mono (kicker / meta). Palette: warm ink #17151F on a soft
+ * violet-tinted paper, one violet accent #7C6CFF. Entrance: staggered
+ * blur-rise, once, then still.
+ */
+
+.fx {
+  --fx-ink: #17151f;
+  --fx-ink-soft: rgba(23, 21, 31, 0.68);
+  --fx-muted: rgba(23, 21, 31, 0.56);
+  --fx-faint: rgba(23, 21, 31, 0.4);
+  --fx-violet: #7c6cff;
+  --fx-violet-soft: #a99bff;
+  --fx-bg: #f4f2fb;
+  --fx-card: rgba(255, 255, 255, 0.72);
+
+  --fx-jakarta: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --fx-inter: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --fx-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+
+  position: relative;
+  background:
+    radial-gradient(ellipse 70% 50% at 82% -10%, rgba(124, 108, 255, 0.09), transparent 60%),
+    radial-gradient(ellipse 55% 42% at 8% 104%, rgba(124, 108, 255, 0.07), transparent 62%),
+    var(--fx-bg);
+  color: var(--fx-ink);
+  overflow: clip;
+}
+
+/* ── dark theme: the FLUX paper flips to violet-tinted charcoal ─────── */
+html.dark .fx {
+  --fx-ink: #f0ede6;
+  --fx-ink-soft: rgba(240, 237, 230, 0.72);
+  --fx-muted: rgba(240, 237, 230, 0.58);
+  --fx-faint: rgba(240, 237, 230, 0.4);
+  --fx-bg: #131118;
+  --fx-card: rgba(255, 255, 255, 0.04);
+}
+
+html.dark .fx {
+  background:      radial-gradient(ellipse 70% 50% at 82% -10%, rgba(124, 108, 255, 0.14), transparent 60%),
+      radial-gradient(ellipse 55% 42% at 8% 104%, rgba(124, 108, 255, 0.1), transparent 62%),
+      var(--fx-bg);
+}
+
+/* Pills invert: light pill, dark text. */
+html.dark .fx-pill,
+html.dark .fx-btn {
+  background: #f0ede6;
+  color: #17151f;
+  box-shadow: 0 18px 40px -16px rgba(0, 0, 0, 0.7);
+}
+
+html.dark .fx-pill:hover,
+html.dark .fx-btn:hover {
+  box-shadow: 0 24px 48px -16px rgba(0, 0, 0, 0.8);
+}
+
+html.dark .fx-textlink {
+  color: var(--fx-ink);
+}
+
+/* ── entrance: staggered blur-rise, once ─────────────────────────────── */
+@keyframes fxBur {
+  from {
+    opacity: 0;
+    filter: blur(16px);
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+.fx .rise {
+  opacity: 0;
+  animation: fxBur 1s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+.fx .d0 { animation-delay: 0ms; }
+.fx .d1 { animation-delay: 70ms; }
+.fx .d2 { animation-delay: 120ms; }
+.fx .d3 { animation-delay: 170ms; }
+.fx .d4 { animation-delay: 220ms; }
+.fx .d5 { animation-delay: 300ms; }
+.fx .d6 { animation-delay: 380ms; }
+.fx .d7 { animation-delay: 490ms; }
+.fx .d8 { animation-delay: 600ms; }
+.fx .d9 { animation-delay: 720ms; }
+
+/* ── nav ─────────────────────────────────────────────────────────────── */
+.fx-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 26px clamp(28px, 4vw, 60px);
+}
+
+.fx-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  font-family: var(--fx-jakarta);
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--fx-ink);
+  text-decoration: none;
+}
+
+.fx-mark {
+  width: 15px;
+  height: 15px;
+  border-radius: 5px;
+  background: linear-gradient(150deg, #a99bff, #7c6cff);
+  box-shadow: 0 3px 10px rgba(124, 108, 255, 0.45);
+}
+
+.fx-links {
+  display: flex;
+  gap: 30px;
+}
+
+.fx-links a {
+  font-family: var(--fx-inter);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--fx-muted);
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.fx-links a:hover {
+  color: var(--fx-ink);
+}
+
+.fx-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 11px 20px;
+  border-radius: 999px;
+  background: var(--fx-ink);
+  color: #fff;
+  font-family: var(--fx-jakarta);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.fx-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px -10px rgba(23, 21, 31, 0.5);
+}
+
+/* ── hero: copy left, big interactive globe toward the right ────────── */
+.fx-hero {
+  display: grid;
+  grid-template-columns: 0.92fr 1.08fr;
+  align-items: center;
+  gap: clamp(28px, 4.5vw, 64px);
+  padding: clamp(36px, 6vh, 72px) clamp(28px, 4vw, 60px) clamp(48px, 8vh, 96px);
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.fx-copy {
+  min-width: 0;
+}
+
+.fx-globe {
+  position: relative;
+  height: clamp(430px, 66vh, 680px);
+  min-width: 0;
+  /* the interactive stage sits slightly toward the right edge */
+  justify-self: end;
+  width: 100%;
+  border-radius: 28px;
+  overflow: hidden;
+  background: radial-gradient(
+    ellipse 82% 74% at 52% 44%,
+    rgba(124, 108, 255, 0.11),
+    rgba(23, 21, 31, 0.965) 76%
+  );
+  box-shadow: 0 36px 90px -36px rgba(23, 21, 31, 0.55);
+}
+
+html.dark .fx-globe {
+  background: radial-gradient(
+    ellipse 82% 74% at 52% 44%,
+    rgba(124, 108, 255, 0.13),
+    rgba(8, 7, 12, 0.97) 78%
+  );
+  box-shadow: 0 36px 90px -36px rgba(0, 0, 0, 0.85);
+  border: 1px solid rgba(240, 237, 230, 0.08);
+}
+
+.fx-hero .fx-kicker {
+  justify-content: flex-start;
+}
+
+.fx-hero .fx-sub {
+  max-width: 460px;
+}
+
+.fx-toggle {
+  border-color: rgba(23, 21, 31, 0.14);
+  color: var(--fx-muted);
+  background: transparent;
+}
+
+.fx-toggle:hover {
+  color: var(--fx-ink);
+  border-color: rgba(23, 21, 31, 0.3);
+}
+
+html.dark .fx-toggle {
+  border-color: rgba(240, 237, 230, 0.18);
+}
+
+html.dark .fx-toggle:hover {
+  color: var(--fx-ink);
+  border-color: rgba(240, 237, 230, 0.36);
+}
+
+.fx-kicker {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 30px;
+  font-family: var(--fx-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--fx-muted);
+}
+
+.fx-kicker::before,
+.fx-kicker::after {
+  content: "";
+  width: 26px;
+  height: 1px;
+  background: var(--fx-violet);
+}
+
+.fx-h1 {
+  margin: 0;
+  font-family: var(--fx-jakarta);
+  font-size: clamp(56px, 7.6vw, 118px);
+  font-weight: 700;
+  line-height: 0.94;
+  letter-spacing: -0.045em;
+  color: var(--fx-ink);
+}
+
+.fx-h1 .dot {
+  color: var(--fx-violet);
+}
+
+.fx-sub {
+  margin: 34px 0 0;
+  max-width: 460px;
+  font-family: var(--fx-inter);
+  font-size: clamp(17px, 1.35vw, 20px);
+  line-height: 1.55;
+  color: var(--fx-muted);
+}
+
+.fx-ctas {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  margin-top: 40px;
+}
+
+.fx-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 30px;
+  border-radius: 999px;
+  background: var(--fx-ink);
+  color: #fff;
+  font-family: var(--fx-jakarta);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 18px 40px -16px rgba(23, 21, 31, 0.45);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+.fx-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 24px 48px -16px rgba(23, 21, 31, 0.55);
+}
+
+.fx-btn .arr {
+  transition: transform 200ms ease;
+}
+
+.fx-btn:hover .arr {
+  transform: translateX(4px);
+}
+
+.fx-textlink {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--fx-inter);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--fx-ink);
+  text-decoration: none;
+}
+
+.fx-textlink::after {
+  content: "›";
+  margin-left: 7px;
+  color: var(--fx-violet);
+  transition: transform 200ms ease;
+}
+
+.fx-textlink:hover {
+  color: var(--fx-violet);
+}
+
+.fx-textlink:hover::after {
+  transform: translateX(3px);
+}
+
+/* ── meta row ────────────────────────────────────────────────────────── */
+.fx-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 18px;
+  padding: 26px clamp(28px, 4vw, 60px) 30px;
+  font-family: var(--fx-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fx-faint);
+}
+
+.fx-meta .dot-sep {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--fx-violet);
+  opacity: 0.8;
+}
+
+/* ── sections below (kept Groundwork content, FLUX dressing) ─────────── */
+.fx .fx-section-head {
+  font-family: var(--fx-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--fx-muted);
+}
+
+/* ── BackgroundPaths: the below-the-fold backdrop ────────────────────────
+ * From the first scroll to the end of the page, the sections sit on the
+ * flowing line-art layer. It pins (sticky) at the viewport while the content
+ * scrolls over it; the sections' own solid backgrounds are made transparent
+ * so the paths show through, and gradient washes keep copy legible. */
+.fx-paths-bg {
+  position: relative;
+}
+
+.fx-paths-layer {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background:
+    linear-gradient(to bottom, var(--fx-bg) 0%, rgba(255, 255, 255, 0) 12%, rgba(255, 255, 255, 0) 88%, var(--fx-bg) 100%),
+    linear-gradient(to right, rgba(244, 242, 251, 0.5) 0%, rgba(244, 242, 251, 0) 32%, rgba(244, 242, 251, 0) 68%, rgba(244, 242, 251, 0.5) 100%),
+    var(--fx-bg);
+}
+
+.fx-paths-layer svg {
+  color: rgba(23, 21, 31, 0.8);
+}
+
+html.dark .fx-paths-layer {
+  background:
+    linear-gradient(to bottom, var(--fx-bg) 0%, rgba(19, 17, 24, 0) 12%, rgba(19, 17, 24, 0) 88%, var(--fx-bg) 100%),
+    linear-gradient(to right, rgba(19, 17, 24, 0.5) 0%, rgba(19, 17, 24, 0) 32%, rgba(19, 17, 24, 0) 68%, rgba(19, 17, 24, 0.5) 100%),
+    var(--fx-bg);
+}
+
+html.dark .fx-paths-layer svg {
+  color: rgba(240, 237, 230, 0.8);
+}
+
+.fx-paths-content {
+  position: relative;
+  z-index: 1;
+  margin-top: -100vh;
+}
+
+/* The sections' own paper backgrounds step aside so the line-art shows. */
+.fx-paths-content .bg-paper-50,
+.fx-paths-content .bg-paper-100 {
+  background-color: transparent;
+}
+
+/* ── responsive ──────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .fx-hero {
+    grid-template-columns: 1fr;
+  }
+  .fx-globe {
+    height: clamp(320px, 48vh, 460px);
+    order: 2;
+    justify-self: stretch;
+  }
+}
+
+@media (max-width: 720px) {
+  .fx-links {
+    display: none;
+  }
+  .fx-ctas {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .fx-h1 {
+    font-size: clamp(44px, 13vw, 72px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx .rise {
+    animation: none;
+    opacity: 1;
+  }
+}

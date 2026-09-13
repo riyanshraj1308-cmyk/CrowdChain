@@ -10,7 +10,7 @@ const FAQS = [
   },
   {
     q: "Can a creator withdraw funds without a vote?",
-    a: "No. The smart contract only releases a milestone's allocated amount after that specific milestone has been approved by contributor vote. There is no admin key or override — not even Groundwork can move escrowed funds directly.",
+    a: "No. The smart contract only releases a milestone's allocated amount after that specific milestone has been approved by contributor vote. There is no admin key or override — not even CrowdChain can move escrowed funds directly.",
   },
   {
     q: "How is my voting power calculated?",
@@ -22,7 +22,7 @@ const FAQS = [
   },
   {
     q: "Which networks are supported?",
-    a: "Groundwork runs on any EVM-compatible network. It's currently live on Ethereum mainnet and Sepolia testnet, with more networks planned.",
+    a: "CrowdChain runs on any EVM-compatible network. It's currently live on Ethereum mainnet and Sepolia testnet, with more networks planned.",
   },
 ];
 

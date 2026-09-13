@@ -85,7 +85,7 @@ export default function Hero() {
 
 function HeroEscrowCard() {
   return (
-    <div className="relative w-full max-w-md rounded-xl border border-ink-950/10 bg-ink-950 p-7 text-paper-50 shadow-lifted">
+    <div className="panel-ink relative w-full max-w-md rounded-xl border border-ink-950/10 bg-ink-950 p-7 text-paper-50 shadow-lifted">
       <div className="flex items-center justify-between border-b border-paper-50/10 pb-4">
         <span className="text-sm font-medium text-paper-200/70">Campaign Escrow</span>
         <span className="rounded-full bg-moss-500/20 px-2.5 py-1 text-xs font-medium text-moss-400">

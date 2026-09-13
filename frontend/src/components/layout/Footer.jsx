@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Sprout, Github, Twitter, MessageCircle } from "lucide-react";
+import { Github, Twitter, MessageCircle } from "lucide-react";
 
 const COLUMNS = [
   {
@@ -18,20 +18,26 @@ const COLUMNS = [
       { label: "Creator Reputation", to: "/about#reputation" },
       { label: "Smart Contract", to: "/about#contract" },
       { label: "FAQ", to: "/about#faq" },
+      { label: "Deepfield — Studio Showcase", to: "/deepfield" },
     ],
   },
 ];
 
 export default function Footer() {
   return (
-    <footer className="border-t border-ink-950/10 bg-ink-950 text-paper-200">
+    <footer className="panel-ink border-t border-ink-950/10 bg-ink-950 text-paper-200">
       <div className="container-page grid gap-12 py-16 sm:grid-cols-2 lg:grid-cols-4">
         <div className="lg:col-span-2">
-          <Link to="/" className="flex items-center gap-2 font-display text-xl text-paper-50">
-            <span className="flex h-8 w-8 items-center justify-center rounded-md bg-copper-500 text-paper-50">
-              <Sprout className="h-4 w-4" aria-hidden="true" />
-            </span>
-            Groundwork
+          <Link to="/" className="flex items-center gap-2.5 font-display text-xl text-paper-50">
+            <span
+              aria-hidden="true"
+              className="h-[15px] w-[15px] rounded-[5px]"
+              style={{
+                background: "linear-gradient(150deg, #a99bff, #7c6cff)",
+                boxShadow: "0 3px 10px rgba(124, 108, 255, 0.45)",
+              }}
+            />
+            CrowdChain
           </Link>
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-paper-200/70">
             Funds are held in an on-chain escrow and released milestone by milestone, only after
@@ -71,7 +77,7 @@ export default function Footer() {
 
       <div className="border-t border-paper-50/10">
         <div className="container-page flex flex-col items-center justify-between gap-3 py-6 text-xs text-paper-200/50 sm:flex-row">
-          <p>© {new Date().getFullYear()} Groundwork. Built on Ethereum-compatible chains.</p>
+          <p>© {new Date().getFullYear()} CrowdChain. Built on Ethereum-compatible chains.</p>
           <div className="flex gap-5">
             <Link to="/about" className="hover:text-paper-200">
               Terms

@@ -38,7 +38,8 @@ export default function CampaignDetails() {
   );
 
   return (
-    <div className="container-page py-10 sm:py-14">
+    <div className="tab-content">
+      <div className="container-page py-10 sm:py-14">
       <Link to="/explore" className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-ink-600 hover:text-ink-950">
         <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to Explore
       </Link>
@@ -137,13 +138,14 @@ export default function CampaignDetails() {
           <ContributeWidget campaign={campaign} onContributed={() => api.getCampaign(id).then(setCampaign)} />
         </div>
       </div>
+      </div>
     </div>
   );
 }
 
 function DetailsSkeleton() {
   return (
-    <div className="container-page py-14">
+    <div className="tab-content container-page py-14">
       <div className="grid gap-10 lg:grid-cols-[1fr_380px]">
         <div>
           <Skeleton className="h-6 w-40" />

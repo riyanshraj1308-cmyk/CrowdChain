@@ -86,7 +86,7 @@ export default function ContributeWidget({ campaign, onContributed }) {
               <button
                 key={val}
                 onClick={() => setAmount(val)}
-                className={`flex-1 rounded-md border py-2 text-sm font-medium transition-colors ${
+                className={`flex-1 rounded-full border py-2 text-sm font-medium transition-colors ${
                   amount === val
                     ? "border-copper-500 bg-copper-50 text-copper-600"
                     : "border-ink-950/15 text-ink-700 hover:border-ink-950/30"

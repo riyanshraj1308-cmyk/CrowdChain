@@ -3,11 +3,12 @@ import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 
 const VARIANTS = {
-  primary: "bg-ink-950 text-paper-50 hover:bg-ink-900 border border-ink-950",
-  accent: "bg-copper-500 text-paper-50 hover:bg-copper-600 border border-copper-500",
-  secondary: "bg-transparent text-ink-950 border border-ink-950/70 hover:bg-ink-950/5",
-  ghost: "bg-transparent text-ink-900 border border-transparent hover:bg-ink-950/5",
-  danger: "bg-transparent text-rust-500 border border-rust-500/60 hover:bg-rust-50",
+  /* FLUX pill language everywhere: fully rounded, Jakarta, violet accent. */
+  primary: "rounded-full bg-ink-950 text-paper-50 hover:bg-ink-900 border border-ink-950",
+  accent: "rounded-full bg-violet text-paper-50 hover:bg-violet-300 hover:text-ink-950 border border-violet",
+  secondary: "rounded-full bg-transparent text-ink-950 border border-ink-950/20 hover:border-ink-950/45 hover:bg-ink-950/5",
+  ghost: "rounded-full bg-transparent text-ink-900 border border-transparent hover:bg-ink-950/5",
+  danger: "rounded-full bg-transparent text-rust-500 border border-rust-500/60 hover:bg-rust-50",
 };
 
 const SIZES = {
@@ -43,8 +44,8 @@ const Button = forwardRef(function Button(
         ref={ref}
         disabled={isDisabled}
         aria-busy={loading || undefined}
-        className={`inline-flex select-none items-center justify-center rounded font-sans font-medium
-          transition-colors duration-150 ease-out
+        className={`inline-flex select-none items-center justify-center font-display font-semibold tracking-tight
+          transition-all duration-200 ease-out
           disabled:cursor-not-allowed disabled:opacity-40
           ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
         {...props}

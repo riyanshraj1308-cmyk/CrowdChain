@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Plus, Trash2, ArrowRight, ArrowLeft, Rocket } from "lucide-react";
 import Button from "../components/ui/Button";
+import PageHero from "../components/ui/PageHero";
 import { Input, Textarea, Select } from "../components/ui/Field";
 import Reveal from "../components/ui/Reveal";
+import GlassCTABanner from "../components/ui/GlassCTABanner";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 
@@ -107,14 +109,13 @@ export default function CreateCampaign() {
   }
 
   return (
-    <div className="container-page max-w-3xl py-12 sm:py-16">
-      <Reveal>
-        <h1 className="text-3xl text-ink-950 sm:text-4xl">Start a Campaign</h1>
-        <p className="mt-2 text-ink-600">
-          Define clear milestones up front — contributors fund with more confidence when they know
-          exactly what unlocks each release.
-        </p>
-      </Reveal>
+    <div className="tab-content">
+      <PageHero kicker="Launch" title="Start a Campaign">
+        Define clear milestones up front — contributors fund with more confidence when they know
+        exactly what unlocks each release.
+      </PageHero>
+
+      <div className="container-page max-w-3xl py-12 sm:py-16">
 
       <StepIndicator steps={STEPS} current={step} />
 
@@ -300,6 +301,11 @@ export default function CreateCampaign() {
             </Button>
           )}
         </div>
+
+        <Reveal className="mt-16">
+          <GlassCTABanner />
+        </Reveal>
+      </div>
       </div>
     </div>
   );

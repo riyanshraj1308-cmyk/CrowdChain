@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, ShieldCheck, Vote, Banknote, Lock, RefreshCcw, FileCode2 } from "lucide-react";
 import Reveal, { RevealGroup, revealItemVariants } from "../components/ui/Reveal";
 import Button from "../components/ui/Button";
+import PageHero from "../components/ui/PageHero";
 import { motion } from "framer-motion";
 import FAQ from "../components/landing/FAQ";
 
@@ -34,24 +35,12 @@ const PRINCIPLES = [
 
 export default function About() {
   return (
-    <div>
-      <section className="border-b border-ink-950/8 bg-paper-100 py-16 sm:py-24">
-        <div className="container-page max-w-2xl">
-          <Reveal>
-            <span className="text-xs font-semibold uppercase tracking-wide text-copper-500">
-              How it works
-            </span>
-            <h1 className="mt-2 text-3xl text-ink-950 sm:text-4xl">
-              A funding model built around proof, not promises.
-            </h1>
-            <p className="mt-4 text-base leading-relaxed text-ink-600">
-              Groundwork replaces "trust me" crowdfunding with a smart contract that holds funds in
-              escrow and only releases them when the people who funded a campaign agree the work
-              actually happened.
-            </p>
-          </Reveal>
-        </div>
-      </section>
+    <div className="tab-content">
+      <PageHero kicker="How it works" title="A funding model built around proof, not promises.">
+        CrowdChain replaces "trust me" crowdfunding with a smart contract that holds funds in
+        escrow and only releases them when the people who funded a campaign agree the work
+        actually happened.
+      </PageHero>
 
       <section id="reputation" className="border-b border-ink-950/8 bg-paper-50 py-20 sm:py-28">
         <div className="container-page">
@@ -71,7 +60,7 @@ export default function About() {
         </div>
       </section>
 
-      <section id="contract" className="border-b border-ink-950/8 bg-ink-950 py-20 text-paper-50 sm:py-28">
+      <section id="contract" className="panel-ink border-b border-ink-950/8 bg-ink-950 py-20 text-paper-50 sm:py-28">
         <div className="container-page grid gap-10 lg:grid-cols-2 lg:items-center">
           <Reveal>
             <div className="flex items-center gap-2">
@@ -84,7 +73,7 @@ export default function About() {
               No admin key can move escrowed funds.
             </h2>
             <p className="mt-4 max-w-md text-base leading-relaxed text-paper-200/70">
-              Groundwork's escrow contract is open and auditable. There is no owner function that can
+              CrowdChain's escrow contract is open and auditable. There is no owner function that can
               withdraw contributor funds — the only paths out of escrow are an approved milestone
               release to the creator, or a refund claim by a contributor.
             </p>

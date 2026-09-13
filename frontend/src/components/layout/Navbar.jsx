@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu, X, Wallet, ChevronDown, LayoutDashboard, User, LogOut, Sprout } from "lucide-react";
+import { Menu, X, Wallet, ChevronDown, LayoutDashboard, User, LogOut, Sun, Moon } from "lucide-react";
 import Button from "../ui/Button";
 import Avatar from "../ui/Avatar";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import { shortAddress } from "../../lib/format";
 
 const NAV_LINKS = [
@@ -18,6 +19,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const { isConnected, address, user, connect, disconnect, status } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,11 +29,16 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-40 border-b border-ink-950/8 bg-paper-50/90 backdrop-blur-md">
       <div className="container-page flex h-18 items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 font-display text-xl text-ink-950">
-          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-ink-950 text-paper-50">
-            <Sprout className="h-4 w-4" aria-hidden="true" />
-          </span>
-          Groundwork
+        <Link to="/" className="flex items-center gap-2.5 font-display text-xl text-ink-950">
+          <span
+            aria-hidden="true"
+            className="h-[15px] w-[15px] rounded-[5px]"
+            style={{
+              background: "linear-gradient(150deg, #a99bff, #7c6cff)",
+              boxShadow: "0 3px 10px rgba(124, 108, 255, 0.45)",
+            }}
+          />
+          CrowdChain
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
@@ -40,7 +47,7 @@ export default function Navbar() {
               key={link.to}
               to={link.to}
               className={({ isActive }) =>
-                `relative py-2 text-sm font-medium transition-colors ${
+                `relative whitespace-nowrap py-2 text-sm font-medium transition-colors ${
                   isActive ? "text-ink-950" : "text-ink-600 hover:text-ink-950"
                 }`
               }
@@ -51,7 +58,7 @@ export default function Navbar() {
                   {isActive && (
                     <motion.span
                       layoutId="nav-underline"
-                      className="absolute inset-x-0 -bottom-0.5 h-0.5 rounded-full bg-copper-500"
+                      className="absolute inset-x-0 -bottom-0.5 h-0.5 rounded-full bg-violet"
                       transition={{ type: "spring", stiffness: 400, damping: 32 }}
                     />
                   )}
@@ -62,11 +69,23 @@ export default function Navbar() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
+          <button
+            onClick={toggleTheme}
+            aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+            title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-ink-950/15 text-ink-600 transition-colors hover:bg-ink-950/5 hover:text-ink-900"
+          >
+            {theme === "dark" ? (
+              <Sun className="h-[18px] w-[18px]" aria-hidden="true" />
+            ) : (
+              <Moon className="h-[18px] w-[18px]" aria-hidden="true" />
+            )}
+          </button>
           {isConnected ? (
             <div className="relative">
               <button
                 onClick={() => setMenuOpen((o) => !o)}
-                className="flex h-11 items-center gap-2 rounded-md border border-ink-950/15 pl-2 pr-3 hover:bg-ink-950/5"
+                className="flex h-11 items-center gap-2 rounded-full border border-ink-950/15 pl-2 pr-3 hover:bg-ink-950/5"
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
               >
@@ -152,6 +171,7 @@ function MenuItem({ to, icon: Icon, children, onClick }) {
 
 function MobileMenu({ open, onClose }) {
   const { isConnected, address, connect, disconnect, status } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     if (!open) return;
@@ -189,13 +209,26 @@ function MobileMenu({ open, onClose }) {
           >
             <div className="mb-4 flex items-center justify-between">
               <span className="font-display text-lg text-ink-950">Menu</span>
-              <button
-                onClick={onClose}
-                aria-label="Close menu"
-                className="flex h-10 w-10 items-center justify-center rounded-md hover:bg-ink-950/5"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={toggleTheme}
+                  aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+                  className="flex h-10 w-10 items-center justify-center rounded-md text-ink-600 hover:bg-ink-950/5 hover:text-ink-900"
+                >
+                  {theme === "dark" ? (
+                    <Sun className="h-5 w-5" aria-hidden="true" />
+                  ) : (
+                    <Moon className="h-5 w-5" aria-hidden="true" />
+                  )}
+                </button>
+                <button
+                  onClick={onClose}
+                  aria-label="Close menu"
+                  className="flex h-10 w-10 items-center justify-center rounded-md hover:bg-ink-950/5"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
             {NAV_LINKS.map((link) => (
               <NavLink

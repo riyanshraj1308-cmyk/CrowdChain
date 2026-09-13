@@ -7,7 +7,22 @@ import { formatEth } from "../../lib/format";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 
-export default function MilestoneVoteCard({ campaign, milestone, isContributor, onVoted }) {
+/**
+ * MilestoneVoteCard — the approve/reject UI for a submitted milestone.
+ *
+ * Two skins:
+ *  - standalone (default): a regular card on the page's paper wash — theme
+ *    tokens, readable in both themes (on Campaign Details).
+ *  - embedded: lives on the NeonCard's always-dark face (Voting tab), so all
+ *    colors are literal light-on-dark values rather than theme tokens.
+ */
+export default function MilestoneVoteCard({
+  campaign,
+  milestone,
+  isContributor,
+  onVoted,
+  embedded = false,
+}) {
   const { isConnected, connect } = useAuth();
   const toast = useToast();
   const [voting, setVoting] = useState(null); // 'for' | 'against' | null
@@ -44,39 +59,60 @@ export default function MilestoneVoteCard({ campaign, milestone, isContributor, 
     }
   }
 
+  // Literal light-on-dark colors for the NeonCard face.
+  const e = embedded;
+  const heading = e ? "text-white" : "text-ink-950";
+  const muted = e ? "text-white/60" : "text-ink-600";
+  const body = e ? "text-white/75" : "text-ink-700";
+  const faint = e ? "text-white/50" : "text-ink-500";
+  const fainter = e ? "text-white/40" : "text-ink-400";
+  const link = e ? "text-violet-300 hover:text-violet-300" : "text-copper-600";
+  const track = e ? "bg-white/15" : "bg-ink-950/10";
+  const approveLabel = e ? "text-moss-400" : "text-moss-600";
+  const rejectLabel = e ? "text-rust-400" : "text-rust-500";
+
   return (
-    <div className="rounded-lg border border-amber-400/40 bg-amber-50/40 p-5 sm:p-6">
+    <div
+      className={
+        e
+          ? "w-full text-left"
+          : "rounded-lg border border-ink-950/10 bg-paper-50 p-5 text-left sm:p-6"
+      }
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Badge variant="amber" icon={Clock}>
             Voting in progress
           </Badge>
-          <h3 className="mt-2 font-display text-xl text-ink-950">
+          <h3 className={`mt-2 font-display text-xl ${heading}`}>
             Milestone {milestone.contractMilestoneId + 1}: {milestone.title}
           </h3>
         </div>
         {milestone.votingDeadline && (
-          <p className="text-sm text-ink-600">
-            Voting closes <strong className="text-ink-900">{new Date(milestone.votingDeadline).toLocaleDateString()}</strong>
+          <p className={`text-sm ${muted}`}>
+            Voting closes{" "}
+            <strong className={e ? "text-white/90" : "text-ink-900"}>
+              {new Date(milestone.votingDeadline).toLocaleDateString()}
+            </strong>
           </p>
         )}
       </div>
 
-      <p className="mt-3 text-sm leading-relaxed text-ink-700">{milestone.description}</p>
+      <p className={`mt-3 text-sm leading-relaxed ${body}`}>{milestone.description}</p>
 
       {milestone.proofUrl && (
         <a
           href={milestone.proofUrl}
           target="_blank"
           rel="noreferrer"
-          className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-copper-600 hover:underline"
+          className={`mt-3 inline-flex items-center gap-1.5 text-sm font-medium hover:underline ${link}`}
         >
           View submitted proof <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
         </a>
       )}
 
       <div className="mt-5 space-y-2">
-        <div className="flex h-3 w-full overflow-hidden rounded-full bg-ink-950/10">
+        <div className={`flex h-3 w-full overflow-hidden rounded-full ${track}`}>
           <motion.div
             className="h-full bg-moss-500"
             initial={{ width: 0 }}
@@ -91,14 +127,14 @@ export default function MilestoneVoteCard({ campaign, milestone, isContributor, 
           />
         </div>
         <div className="flex items-center justify-between text-sm">
-          <span className="text-moss-600">
+          <span className={approveLabel}>
             <strong>{forPct}%</strong> approve ({votesFor.toLocaleString()} ETH weight)
           </span>
-          <span className="text-rust-500">
+          <span className={rejectLabel}>
             <strong>{100 - forPct}%</strong> reject ({votesAgainst.toLocaleString()} ETH weight)
           </span>
         </div>
-        <p className="text-xs text-ink-500">
+        <p className={`text-xs ${faint}`}>
           Requires ≥50% of cast voting weight to approve. Weight is proportional to each contributor's
           ETH contribution.
         </p>
@@ -117,8 +153,8 @@ export default function MilestoneVoteCard({ campaign, milestone, isContributor, 
       ) : (
         <div className="mt-5 flex flex-col gap-3 sm:flex-row">
           <Button
-            variant="primary"
-            className="flex-1 !bg-moss-500 !border-moss-500 hover:!bg-moss-600"
+            variant={e ? "accent" : "primary"}
+            className={`flex-1 ${e ? "" : "!bg-moss-500 !border-moss-500 hover:!bg-moss-600"}`}
             icon={ThumbsUp}
             loading={voting === "for"}
             disabled={Boolean(voting)}
@@ -128,7 +164,7 @@ export default function MilestoneVoteCard({ campaign, milestone, isContributor, 
           </Button>
           <Button
             variant="danger"
-            className="flex-1"
+            className={`flex-1 ${e ? "!border-rust-400/70 !text-rust-400 hover:!bg-rust-400/10" : ""}`}
             icon={ThumbsDown}
             loading={voting === "against"}
             disabled={Boolean(voting)}
@@ -139,11 +175,11 @@ export default function MilestoneVoteCard({ campaign, milestone, isContributor, 
         </div>
       )}
       {!isContributor && isConnected && !voted && (
-        <p className="mt-3 text-xs text-ink-500">
+        <p className={`mt-3 text-xs ${faint}`}>
           Only wallets with a confirmed contribution to this campaign can vote.
         </p>
       )}
-      <p className="mt-3 text-xs text-ink-400">
+      <p className={`mt-3 text-xs ${fainter}`}>
         Approval status shown here reflects {meetsThreshold ? "a passing" : "a failing"} threshold at
         the current vote tally — final outcome is finalized on-chain once voting closes.
       </p>

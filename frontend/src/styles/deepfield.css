@@ -1,0 +1,482 @@
+/*
+ * DEEPFIELD — one-screen studio plate.
+ *
+ * The six silent failures, encoded:
+ *  1. The middle of the frame stays empty — copy is pinned to the left third,
+ *     the index to the bottom-right corner.
+ *  2. No scroll: the plate is position:fixed over a locked document.
+ *  3. The index is real: four named projects with disciplines and hairlines.
+ *  4. Contrast over the bright sand is fixed in the scrim ladder (a corner
+ *     radial), never with text-shadow or a box behind the text.
+ *  5. Video autoplay is resilient (see Deepfield.jsx).
+ *  6. Pointer parallax is slow (lerp .045, capped 14/11px, scale 1.06) and
+ *     absent under pointer:coarse.
+ *
+ * This page opts out of app theming on purpose: the palette is sampled from
+ * the plate, not from Groundwork's paper/ink system.
+ */
+
+/* Switzer (Indian Type Foundry via Fontshare, ITF Free Font License),
+ * self-hosted in /public/fonts so the page has zero font CDN dependency. */
+@font-face {
+  font-family: "Switzer";
+  src: url("/fonts/switzer-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Switzer";
+  src: url("/fonts/switzer-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Switzer";
+  src: url("/fonts/switzer-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+.df {
+  /* Palette — out of the plate. */
+  --df-ink: #000405;
+  --df-paper: #dceff2;
+  --df-accent: #5cc6e0;
+  --df-mute: rgb(220 239 242 / 0.56);
+  --df-faint: rgb(220 239 242 / 0.34);
+  --df-line: rgb(220 239 242 / 0.13);
+
+  /* Switzer with system fallbacks; loaded via Google Fonts link in index.html. */
+  --df-font: "Switzer", -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI",
+    Helvetica, Arial, sans-serif;
+
+  position: fixed;
+  inset: 0;
+  z-index: 30; /* above navbar/banner, below toasts */
+  overflow: hidden;
+  background: var(--df-ink);
+  color: var(--df-paper);
+  font-family: var(--df-font);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* The app's base layer styles h1/p directly (display serif, ink colors);
+   this page's own family must win on the elements themselves. */
+.df h1,
+.df p,
+.df a,
+.df span {
+  font-family: var(--df-font);
+}
+
+/* Lock the document: there is no second section and must not be one. */
+html:has(.df) ,
+html:has(.df) body {
+  height: 100%;
+  overflow: hidden !important;
+}
+
+/* ── z0 the plate ─────────────────────────────────────────────────────── */
+.df-stage {
+  position: absolute;
+  inset: 0;
+}
+
+.df-media {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+  transform: scale(1.06); /* headroom for the parallax drift */
+}
+
+.df-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 64% 46%; /* keeps the shaft on small crops */
+  transition: opacity 900ms ease;
+}
+
+/* If the network is blocked entirely the plate still finishes: a deep,
+   static stand-in approximating the frame's own palette. */
+.df-media::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 34% 62% at 30% -6%, rgb(92 198 224 / 0.32), transparent 62%),
+    linear-gradient(180deg, #05131c 0%, #06283a 44%, #041220 78%, #010a10 100%);
+}
+
+/* ── z1 grade ─────────────────────────────────────────────────────────── */
+.df-grade {
+  position: absolute;
+  inset: 0;
+  background: #06283a;
+  mix-blend-mode: soft-light;
+  opacity: 0.6;
+}
+
+/* ── z2 scrim ladder ──────────────────────────────────────────────────── */
+.df-scrims {
+  position: absolute;
+  inset: 0;
+  /* Eased six-stop ladder from the LEFT — the copy's side, and only that
+     side. The middle stays open. */
+  background: linear-gradient(
+    90deg,
+    rgb(0 4 5 / 0.82) 0%,
+    rgb(0 4 5 / 0.66) 16%,
+    rgb(0 4 5 / 0.42) 34%,
+    rgb(0 4 5 / 0.16) 52%,
+    rgb(0 4 5 / 0.04) 70%,
+    rgb(0 4 5 / 0) 86%
+  );
+}
+
+.df-scrims::before {
+  /* Short top gradient for the nav rail. */
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 108px;
+  background: linear-gradient(180deg, rgb(0 4 5 / 0.62), rgb(0 4 5 / 0));
+}
+
+.df-scrims::after {
+  /* The corner radial — failure 4. Measured peak luma under the index box
+     lands near t=6s of the loop; this is what keeps it readable. */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 52% 46% at 88% 97%,
+    rgb(0 6 9 / 0.86),
+    transparent 82%
+  );
+}
+
+/* ── z3 grain — dark navy water is where 8-bit H.264 bands worst ─────── */
+.df-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size: 160px 160px;
+}
+
+/* ── z4 chrome ────────────────────────────────────────────────────────── */
+.df-nav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  padding: 0 clamp(20px, 3.4vw, 48px);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.df-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15.5px;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  color: var(--df-paper);
+  text-decoration: none;
+}
+
+.df-mark-square {
+  width: 9px;
+  height: 9px;
+  background: var(--df-accent); /* accent use 1 of 4 */
+}
+
+.df-links {
+  margin-left: auto;
+  display: flex;
+  gap: 26px;
+}
+
+.df-links a {
+  font-size: 13.5px;
+  color: var(--df-mute);
+  text-decoration: none;
+  transition: color 180ms ease;
+}
+
+.df-links a:hover {
+  color: var(--df-paper);
+}
+
+.df-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding-left: 18px;
+  margin-left: 6px;
+  border-left: 1px solid var(--df-line);
+  font-size: 11px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--df-faint);
+  white-space: nowrap;
+}
+
+.df-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--df-accent); /* accent use 2 of 4 */
+}
+
+/* ── left third: the caption ──────────────────────────────────────────── */
+.df-copy {
+  position: absolute;
+  left: clamp(20px, 3.4vw, 48px);
+  right: auto;
+  top: clamp(120px, 21svh, 220px);
+  max-width: min(34rem, 54vw);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.df-h1 {
+  margin: 0;
+  font-size: clamp(1.9rem, 4.1vw, 3.5rem);
+  font-weight: 500;
+  line-height: 1.08;
+  letter-spacing: -0.033em;
+  color: var(--df-paper);
+}
+
+.df-sub {
+  margin: 22px 0 0;
+  max-width: 44ch;
+  font-size: clamp(14.5px, 1.05vw, 16.5px);
+  line-height: 1.62;
+  color: var(--df-mute);
+}
+
+.df-btn {
+  margin-top: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 24px;
+  border-radius: 999px;
+  background: var(--df-paper); /* solid, not ghost */
+  color: var(--df-ink);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.006em;
+  text-decoration: none;
+  transition: transform 200ms ease;
+}
+
+.df-btn:hover {
+  transform: translateY(-1px);
+}
+
+.df-btn-arrow {
+  font-size: 13px;
+  transition: transform 200ms ease;
+}
+
+.df-btn:hover .df-btn-arrow {
+  transform: translateX(3px);
+}
+
+/* ── bottom-right: the index ──────────────────────────────────────────── */
+.df-index {
+  position: absolute;
+  right: clamp(20px, 3.4vw, 48px);
+  bottom: clamp(22px, 4.5svh, 44px);
+  width: min(22rem, 44vw);
+}
+
+.df-index-head {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--df-line);
+  font-size: 11px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--df-faint);
+}
+
+.df-index ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.df-index li + li {
+  border-top: 1px solid var(--df-line);
+}
+
+.df-index a {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 0;
+  padding-left: 0;
+  text-decoration: none;
+  transition: padding-left 220ms ease;
+}
+
+.df-index a:hover {
+  padding-left: 9px;
+}
+
+.df-index-name {
+  font-size: 13.5px;
+  color: var(--df-paper);
+}
+
+.df-index-disc {
+  font-size: 11px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--df-faint);
+  transition: color 220ms ease;
+}
+
+/* Hover on a row tints the discipline — one of the four accent uses (3/4). */
+.df-index a:hover .df-index-disc {
+  color: var(--df-accent);
+}
+
+/* ── bottom-left: coordinates ─────────────────────────────────────────── */
+.df-place {
+  position: absolute;
+  left: clamp(20px, 3.4vw, 48px);
+  bottom: clamp(22px, 4.5svh, 44px);
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: var(--df-faint);
+}
+
+/* ── entrance: once, staggered, then nothing ever moves again ────────── */
+@keyframes dfRise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.df-nav,
+.df-h1,
+.df-sub,
+.df-btn,
+.df-index,
+.df-place {
+  animation: dfRise 850ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.df-nav    { animation-delay: 0.05s; }
+.df-h1     { animation-delay: 0.2s; }
+.df-sub    { animation-delay: 0.3s; }
+.df-btn    { animation-delay: 0.38s; }
+.df-index  { animation-delay: 0.5s; }
+.df-place  { animation-delay: 0.56s; }
+
+/* Focus ring: the fourth and final accent use (4/4). */
+.df :focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--df-accent);
+  border-radius: 4px;
+}
+
+.df a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── small screens: copy drops to the bottom, chrome thins out ───────── */
+@media (max-width: 720px) {
+  .df-links,
+  .df-status,
+  .df-place {
+    display: none;
+  }
+
+  .df-copy {
+    left: 20px;
+    right: 20px;
+    top: auto;
+    /* Clears the full-width index (3 rows + header ≈ 200px) beneath it. */
+    bottom: clamp(240px, 34svh, 330px);
+    max-width: none;
+  }
+
+  /* The scrim flips from left-directional to bottom-up, because the copy
+     moved to the bottom. */
+  .df-scrims {
+    background: linear-gradient(
+      0deg,
+      rgb(0 4 5 / 0.84) 0%,
+      rgb(0 4 5 / 0.6) 22%,
+      rgb(0 4 5 / 0.24) 48%,
+      rgb(0 4 5 / 0) 72%
+    );
+  }
+
+  .df-index {
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
+    width: auto;
+  }
+
+  /* Keep three rows on phones. */
+  .df-index li:nth-child(n + 4) {
+    display: none;
+  }
+
+  .df-h1 {
+    font-size: clamp(1.9rem, 8.4vw, 2.6rem);
+  }
+
+  .df-btn {
+    margin-top: 26px;
+    padding: 12px 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .df-nav,
+  .df-h1,
+  .df-sub,
+  .df-btn,
+  .df-index,
+  .df-place {
+    animation: none;
+  }
+
+  .df-media {
+    transform: scale(1.06); /* keep the crop headroom, drop the drift */
+  }
+}

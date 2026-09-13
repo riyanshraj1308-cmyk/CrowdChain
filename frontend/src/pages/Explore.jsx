@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 import CampaignFilters from "../components/campaign/CampaignFilters";
 import CampaignGrid from "../components/campaign/CampaignGrid";
+import PageHero from "../components/ui/PageHero";
 import Reveal from "../components/ui/Reveal";
+import GlassCTABanner from "../components/ui/GlassCTABanner";
 import { percentFunded, daysRemaining } from "../lib/format";
 
 export default function Explore() {
@@ -49,22 +51,28 @@ export default function Explore() {
   }, [campaigns, filters]);
 
   return (
-    <div className="container-page py-12 sm:py-16">
-      <Reveal>
-        <h1 className="text-3xl text-ink-950 sm:text-4xl">Explore Campaigns</h1>
-        <p className="mt-2 max-w-xl text-ink-600">
-          Every campaign below is funded through on-chain escrow with milestone-gated releases.
-          Browse, dig into the milestone plan, and back the work you believe in.
-        </p>
-      </Reveal>
+    <div className="tab-content">
+      <PageHero
+        kicker="Live now"
+        title="Explore Campaigns"
+        cta="How funding works"
+        ctaTo="/about"
+      >
+        Every campaign is funded through on-chain escrow with milestone-gated releases. Browse, dig
+        into the milestone plan, and back the work you believe in.
+      </PageHero>
 
-      <div className="mt-8">
+      <div className="container-page mt-8 py-8">
         <CampaignFilters filters={filters} onChange={setFilters} />
       </div>
 
       <div className="mt-8">
         <CampaignGrid campaigns={filtered} loading={loading} />
       </div>
+
+      <Reveal className="mt-16">
+        <GlassCTABanner />
+      </Reveal>
     </div>
   );
 }

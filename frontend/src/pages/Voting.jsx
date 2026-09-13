@@ -4,8 +4,11 @@ import { Vote, ArrowRight } from "lucide-react";
 import { api } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import MilestoneVoteCard from "../components/campaign/MilestoneVoteCard";
+import NeonCard from "../components/ui/NeonCard";
+import PageHero from "../components/ui/PageHero";
 import { EmptyState } from "../components/ui/EmptyState";
 import Reveal from "../components/ui/Reveal";
+import GlassCTABanner from "../components/ui/GlassCTABanner";
 import Button from "../components/ui/Button";
 import Avatar from "../components/ui/Avatar";
 import { shortAddress } from "../lib/format";
@@ -32,23 +35,14 @@ export default function Voting() {
   }, []);
 
   return (
-    <div className="container-page py-10 sm:py-14">
-      <Reveal className="max-w-2xl">
-        <div className="flex items-center gap-2">
-          <Vote className="h-5 w-5 text-copper-500" aria-hidden="true" />
-          <span className="text-xs font-semibold uppercase tracking-wide text-copper-500">
-            Community governance
-          </span>
-        </div>
-        <h1 className="mt-2 text-3xl text-ink-950 sm:text-4xl">Milestone Voting</h1>
-        <p className="mt-2 text-ink-600">
-          These campaigns have submitted a milestone for review. Contributors vote with weight
-          proportional to how much they've contributed — every vote here is a real, on-chain decision
-          about whether funds move forward.
-        </p>
-      </Reveal>
+    <div className="tab-content">
+      <PageHero kicker="Community governance" icon={Vote} title="Milestone Voting">
+        These campaigns have submitted a milestone for review. Contributors vote with weight
+        proportional to how much they've contributed — every vote here is a real, on-chain decision
+        about whether funds move forward.
+      </PageHero>
 
-      <div className="mt-10 flex flex-col gap-10">
+      <div className="container-page mt-10 flex flex-col gap-10 py-6 sm:py-8">
         {loading && <p className="text-sm text-ink-500">Loading open votes…</p>}
 
         {!loading && !campaigns.length && (
@@ -72,29 +66,52 @@ export default function Voting() {
           );
 
           return (
-            <Reveal key={campaign.id} className="rounded-lg border border-ink-950/10 p-5 sm:p-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <Link to={`/campaigns/${campaign.id}`} className="flex items-center gap-3 hover:opacity-80">
-                  <Avatar address={campaign.creator.walletAddress} name={campaign.creator.displayName} size={36} />
-                  <div>
-                    <p className="font-display text-lg text-ink-950">{campaign.title}</p>
-                    <p className="text-xs text-ink-500">
-                      by {campaign.creator.displayName || shortAddress(campaign.creator.walletAddress)}
-                    </p>
+            <Reveal key={campaign.id}>
+              {/* The Uiverse neon pulse card — always-dark skin with the roaming
+                  glow dot, replacing the old amber panel. */}
+              <NeonCard>
+                <div className="flex w-full flex-col gap-5 p-5 text-left sm:p-6">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <Link to={`/campaigns/${campaign.id}`} className="flex items-center gap-3 hover:opacity-80">
+                      <Avatar address={campaign.creator.walletAddress} name={campaign.creator.displayName} size={36} />
+                      <div>
+                        <p className="font-display text-lg text-white">{campaign.title}</p>
+                        <p className="text-xs text-white/60">
+                          by {campaign.creator.displayName || shortAddress(campaign.creator.walletAddress)}
+                        </p>
+                      </div>
+                    </Link>
+                    <Button
+                      as={Link}
+                      to={`/campaigns/${campaign.id}`}
+                      variant="secondary"
+                      size="sm"
+                      icon={ArrowRight}
+                      iconPosition="right"
+                      className="!border-white/25 !text-white hover:!bg-white/10"
+                    >
+                      View campaign
+                    </Button>
                   </div>
-                </Link>
-                <Button as={Link} to={`/campaigns/${campaign.id}`} variant="ghost" size="sm" icon={ArrowRight} iconPosition="right">
-                  View campaign
-                </Button>
-              </div>
 
-              <div className="mt-5">
-                <MilestoneVoteCard campaign={campaign} milestone={submitted} isContributor={isContributor} />
-              </div>
+                  <div className="text-left">
+                    <MilestoneVoteCard
+                      campaign={campaign}
+                      milestone={submitted}
+                      isContributor={isContributor}
+                      embedded
+                    />
+                  </div>
+                </div>
+              </NeonCard>
             </Reveal>
           );
         })}
       </div>
+
+      <Reveal className="mt-16">
+        <GlassCTABanner />
+      </Reveal>
     </div>
   );
 }

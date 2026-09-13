@@ -24,7 +24,7 @@ const POINTS = [
 
 export default function MilestoneVotingExplainer() {
   return (
-    <section id="voting" className="border-b border-ink-950/8 bg-ink-950 py-20 text-paper-50 sm:py-28">
+    <section id="voting" className="panel-ink border-b border-ink-950/8 bg-ink-950 py-20 text-paper-50 sm:py-28">
       <div className="container-page grid gap-12 lg:grid-cols-2 lg:gap-16">
         <Reveal>
           <span className="text-xs font-semibold uppercase tracking-wide text-copper-400">
@@ -35,7 +35,7 @@ export default function MilestoneVotingExplainer() {
           </h2>
           <p className="mt-5 max-w-md text-base leading-relaxed text-paper-200/70">
             Traditional crowdfunding hands over the full amount up front and hopes for the best.
-            Groundwork keeps every contributor in the loop — and in control — for every dollar that
+            CrowdChain keeps every contributor in the loop — and in control — for every dollar that
             moves after the initial pledge.
           </p>
         </Reveal>
