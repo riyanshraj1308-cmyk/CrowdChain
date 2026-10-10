@@ -487,10 +487,11 @@ function replaceRequired(source, authored, focused) {
  * body/.frame/.plate backgrounds need suppressing). With `fillPlate` the
  * plate also fills its whole container instead of a centered square.
  *
- * With `keepInteractivity` the study keeps drag / click-to-pin (the default
- * focus style strips those handlers' visual context but keeps them working)
- * AND disables the canvas wheel-zoom — so scrolling the page over the stage
- * scrolls the page instead of zooming the globe.
+ * The wheel release is ALWAYS active in bare mode: the canvas's own
+ * wheel-zoom listener is captured, prevented, and its deltas forwarded to
+ * the parent page (which feeds them into Lenis) — so scrolling over the
+ * globe scrolls/snap-scrolls the page instead of zooming it. Drag and
+ * click-to-pin still reach the canvas.
  */
 const WHEEL_RELEASE_SNIPPET =
   '<script>(function(){function go(){' +
@@ -509,16 +510,16 @@ const WHEEL_RELEASE_SNIPPET =
   '}' +
   'if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",go);}else{go();}})();</script>';
 
-function bareStyles(fillPlate, keepInteractivity) {
+function bareStyles(fillPlate) {
   return `<style id="threeui-study-bare">
     body, .frame { background: transparent !important; }
     .plate { background: transparent !important; ${
       fillPlate ? "width: 100% !important; height: 100% !important;" : ""
     } }
-  </style>${keepInteractivity ? WHEEL_RELEASE_SNIPPET : ""}`;
+  </style>${WHEEL_RELEASE_SNIPPET}`;
 }
 
-function focusedDocument(mode, bare, fillPlate, keepInteractivity) {
+function focusedDocument(mode, bare, fillPlate) {
   const source =
     mode === "light"
       ? replaceRequired(GLOBE_STUDY_SOURCE, AUTHORED_FIGURE_INK, "var INK  = '38,40,48';")
@@ -528,7 +529,7 @@ function focusedDocument(mode, bare, fillPlate, keepInteractivity) {
     .replace(/<title>[\s\S]*?<\/title>/i, `<title>Globe — ThreeUI</title>`)
     .replace(
       "</head>",
-      `${focusStyles(mode)}${bare ? bareStyles(fillPlate, keepInteractivity) : ""}
+      `${focusStyles(mode)}${bare ? bareStyles(fillPlate) : ""}
 </head>`,
     );
 }
@@ -551,14 +552,15 @@ export default function GlobeStudy({
   brightness = DEFAULTS.brightness,
   bare = false,
   fillPlate = false,
-  keepInteractivity = false,
+  /* deprecated: the wheel release is always on in bare mode now */
+  keepInteractivity = undefined,
   className = "",
   style,
 }) {
   const safeMode = mode === "light" ? "light" : "dark";
   const document = useMemo(
-    () => focusedDocument(safeMode, bare, fillPlate, keepInteractivity),
-    [safeMode, bare, fillPlate, keepInteractivity],
+    () => focusedDocument(safeMode, bare, fillPlate),
+    [safeMode, bare, fillPlate],
   );
   const boundedScale = clamp(scale, 0.65, 1.5);
   const boundedOpacity = clamp(opacity, 0.1, 1);

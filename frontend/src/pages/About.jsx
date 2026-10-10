@@ -36,7 +36,12 @@ const PRINCIPLES = [
 export default function About() {
   return (
     <div className="tab-content">
-      <PageHero kicker="How it works" title="A funding model built around proof, not promises.">
+      <PageHero
+        kicker="How it works"
+        title="A funding model built around proof, not promises."
+        cta="Explore Campaigns"
+        ctaTo="/explore"
+      >
         CrowdChain replaces "trust me" crowdfunding with a smart contract that holds funds in
         escrow and only releases them when the people who funded a campaign agree the work
         actually happened.

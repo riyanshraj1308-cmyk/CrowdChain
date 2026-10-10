@@ -1,0 +1,34 @@
+# Render Blueprint — CrowdChain backend API
+# Deploy with: Render Dashboard → New → Blueprint → select this repo.
+# Root dir is backend/; the deployment file (Crowdfunding.latest.json)
+# must be committed so the service knows the contract address + ABI.
+services:
+  - type: web
+    name: crowdchain-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Free tier database: create an M0 cluster at mongodb.com/cloud/atlas
+      # and paste its SRV connection string here.
+      - key: MONGODB_URI
+        sync: false
+      # Auto-generated per deploy — no need to supply.
+      - key: JWT_SECRET
+        generateValue: true
+      # Public Sepolia RPC (Alchemy/Infura free tier), NOT http://127.0.0.1.
+      - key: RPC_URL
+        sync: false
+      - key: CHAIN_ID
+        value: "11155111"
+      # Optional if the committed Crowdfunding.latest.json is present.
+      - key: CONTRACT_ADDRESS
+        sync: false
+      # Must be your Vercel URL (comma-separate extra origins, no trailing slash).
+      - key: CORS_ORIGIN
+        sync: false

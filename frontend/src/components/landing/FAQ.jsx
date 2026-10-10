@@ -30,7 +30,7 @@ export default function FAQ() {
   const [openIndex, setOpenIndex] = useState(0);
 
   return (
-    <section id="faq" className="border-b border-ink-950/8 bg-paper-50 py-20 sm:py-28">
+    <section id="faq" data-section className="border-b border-ink-950/8 bg-paper-50 py-20 sm:py-28">
       <div className="container-page max-w-3xl">
         <Reveal>
           <span className="text-xs font-semibold uppercase tracking-wide text-copper-500">FAQ</span>

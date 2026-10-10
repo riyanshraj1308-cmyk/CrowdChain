@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Github, Twitter, MessageCircle } from "lucide-react";
+import Auralis from "../ui/Auralis";
 
 const COLUMNS = [
   {
@@ -18,15 +19,24 @@ const COLUMNS = [
       { label: "Creator Reputation", to: "/about#reputation" },
       { label: "Smart Contract", to: "/about#contract" },
       { label: "FAQ", to: "/about#faq" },
-      { label: "Deepfield — Studio Showcase", to: "/deepfield" },
     ],
   },
 ];
 
 export default function Footer() {
   return (
-    <footer className="panel-ink border-t border-ink-950/10 bg-ink-950 text-paper-200">
-      <div className="container-page grid gap-12 py-16 sm:grid-cols-2 lg:grid-cols-4">
+    <footer className="panel-ink relative overflow-hidden border-t border-ink-950/10 bg-ink-950 text-paper-200">
+      {/* Same violet-ember canvas backdrop the landing footer uses — a solid
+          ink base with the field painted fully on top, nothing showing through. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0">
+        <Auralis
+          height="100%"
+          colors={["#a99bff", "#c9c0ff", "#7c6cff"]}
+          speed={0.2}
+          grain={0.4}
+        />
+      </div>
+      <div className="container-page relative z-10 grid gap-12 py-16 sm:grid-cols-2 lg:grid-cols-4">
         <div className="lg:col-span-2">
           <Link to="/" className="flex items-center gap-2.5 font-display text-xl text-paper-50">
             <span
@@ -75,7 +85,7 @@ export default function Footer() {
         ))}
       </div>
 
-      <div className="border-t border-paper-50/10">
+      <div className="relative z-10 border-t border-paper-50/10">
         <div className="container-page flex flex-col items-center justify-between gap-3 py-6 text-xs text-paper-200/50 sm:flex-row">
           <p>© {new Date().getFullYear()} CrowdChain. Built on Ethereum-compatible chains.</p>
           <div className="flex gap-5">

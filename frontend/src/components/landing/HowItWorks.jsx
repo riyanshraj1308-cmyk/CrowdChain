@@ -27,7 +27,7 @@ const STEPS = [
 
 export default function HowItWorks() {
   return (
-    <section id="how-it-works" className="border-b border-ink-950/8 bg-paper-100 py-20 sm:py-28">
+    <section id="how-it-works" data-section className="border-b border-ink-950/8 bg-paper-100 py-20 sm:py-28">
       <div className="container-page">
         <Reveal className="max-w-xl">
           <span className="text-xs font-semibold uppercase tracking-wide text-copper-500">

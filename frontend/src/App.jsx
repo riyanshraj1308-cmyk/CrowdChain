@@ -6,7 +6,7 @@ import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
 import PageTransition from "./components/layout/PageTransition";
 import CursorPet from "./components/layout/CursorPet";
-import SmoothScroll from "./components/ui/SmoothScroll";
+import SnapScroll from "./components/ui/SnapScroll";
 import PageBackdrop from "./components/ui/PageBackdrop";
 import Landing from "./pages/Landing";
 import Deepfield from "./pages/Deepfield";
@@ -23,41 +23,49 @@ export default function App() {
   const location = useLocation();
   const lenisRef = useRef(null);
 
+  // Static hosts (opening dist/index.html directly, or any server without
+  // SPA rewrite rules) serve the app at "/index.html". Treat that path as
+  // the root route so the site boots on the landing instead of a 404.
+  const isStaticIndex = location.pathname.endsWith("/index.html");
+  const routeLocation = isStaticIndex ? { ...location, pathname: "/" } : location;
+
   // Smooth-scroll bridge for the globe iframe: the study's canvas calls
-  // preventDefault on wheel (it must, to kill its own zoom handler), which
-  // would otherwise fall back to UNsmoothed native scroll-chaining. The
-  // iframe forwards its wheel deltas here; we feed them into the same Lenis
-  // instance SmoothScroll owns, so scrolling over the globe keeps the page's
-  // inertia. Wheel/scroll events also wake Lenis, which restarts its RAF loop
-  // (it sleeps when idle).
+  // preventDefault on wheel (killing its own zoom handler), so raw deltas
+  // are forwarded here and fed into the same Lenis instance SnapScroll
+  // owns — the page keeps its smooth inertia when scrolling over the globe.
   useEffect(() => {
     function onMessage(e) {
       if (e.data?.type !== "globe-wheel") return;
       if (typeof e.data?.dy !== "number" || !Number.isFinite(e.data.dy)) return;
       const lenis = lenisRef.current;
       if (!lenis) return;
-      // Chase the target with the same lerp easing Lenis uses for real wheel
-      // input, so scrolling over the globe feels identical to the rest of
-      // the page.
+      // Chase the target with the same easing Lenis uses for real wheel
+      // input (lerp 0.1 — matching SnapScroll's base options), so scrolling
+      // over the globe feels identical to the rest of the page.
       lenis.scrollTo(lenis.targetScroll + e.data.dy, { lerp: 0.1 });
     }
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
   }, []);
 
+  // Reset scroll on navigation — otherwise the snap engine anchors a newly
+  // mounted page to wherever the previous page's scroll offset was.
+  useEffect(() => {
+    lenisRef.current?.scrollTo(0, { immediate: true, force: true });
+    window.scrollTo(0, 0);
+  }, [routeLocation.pathname]);
+
   // Chrome-free one-screen showcase — no navbar, banner, footer or scroll.
-  if (location.pathname === "/deepfield") {
+  if (routeLocation.pathname === "/deepfield") {
     return (
-      <Routes location={location} key={location.pathname}>
+      <Routes location={routeLocation}>
         <Route path="/deepfield" element={<Deepfield />} />
-        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     );
   }
 
-  // The landing page carries its own FLUX nav — the app navbar/banner would
-  // stack a second header on top of it.
-  const onLanding = location.pathname === "/";
+  const onLanding = routeLocation.pathname === "/";
 
   return (
     <div className="page-flux flex min-h-screen flex-col">
@@ -68,14 +76,14 @@ export default function App() {
         Skip to content
       </a>
       {!onLanding && <Navbar />}
-      {!onLanding && <PageBackdrop />}
-      <SmoothScroll
+      <PageBackdrop />
+      <SnapScroll
         id="main-content"
         className="flex-1"
         lenisRef={lenisRef}
       >
         <AnimatePresence mode="wait">
-          <Routes location={location} key={location.pathname}>
+          <Routes location={routeLocation} key={routeLocation.pathname}>
             <Route path="/" element={<PageTransition><Landing /></PageTransition>} />
             <Route path="/explore" element={<PageTransition><Explore /></PageTransition>} />
             <Route path="/campaigns/:id" element={<PageTransition><CampaignDetails /></PageTransition>} />
@@ -87,8 +95,10 @@ export default function App() {
             <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
           </Routes>
         </AnimatePresence>
-      </SmoothScroll>
-      <Footer />
+      </SnapScroll>
+      {/* The landing paints its own dark-zone footer (see Landing.jsx); the
+          global footer serves every other page. */}
+      {!onLanding && <Footer />}
       <CursorPet />
     </div>
   );

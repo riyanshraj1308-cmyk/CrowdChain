@@ -3,8 +3,6 @@ import { api } from "../lib/api";
 import CampaignFilters from "../components/campaign/CampaignFilters";
 import CampaignGrid from "../components/campaign/CampaignGrid";
 import PageHero from "../components/ui/PageHero";
-import Reveal from "../components/ui/Reveal";
-import GlassCTABanner from "../components/ui/GlassCTABanner";
 import { percentFunded, daysRemaining } from "../lib/format";
 
 export default function Explore() {
@@ -70,9 +68,6 @@ export default function Explore() {
         <CampaignGrid campaigns={filtered} loading={loading} />
       </div>
 
-      <Reveal className="mt-16">
-        <GlassCTABanner />
-      </Reveal>
     </div>
   );
 }

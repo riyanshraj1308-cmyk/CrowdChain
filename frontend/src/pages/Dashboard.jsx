@@ -11,8 +11,6 @@ import Badge, { statusVariant } from "../components/ui/Badge";
 import { StatCard, EmptyState } from "../components/ui/EmptyState";
 import CampaignGrid from "../components/campaign/CampaignGrid";
 import ProgressBar from "../components/ui/ProgressBar";
-import Reveal from "../components/ui/Reveal";
-import GlassCTABanner from "../components/ui/GlassCTABanner";
 import { formatEth, formatDate, percentFunded, shortAddress } from "../lib/format";
 
 export default function Dashboard() {
@@ -66,7 +64,12 @@ export default function Dashboard() {
 
   return (
     <div className="tab-content">
-      <PageHero kicker="Your studio" title="Dashboard">
+      <PageHero
+        kicker="Your studio"
+        title="Dashboard"
+        cta="Explore Campaigns"
+        ctaTo="/explore"
+      >
         Signed in as {shortAddress(address)} — your campaigns, contributions, and the votes waiting
         on you, all in one place.
       </PageHero>
@@ -77,10 +80,6 @@ export default function Dashboard() {
         <StatCard icon={Coins} label="Total contributed" value={`${totalContributed.toFixed(2)} ETH`} />
         <StatCard icon={Vote} label="Votes awaiting you" value={pendingVotes.length} />
       </div>
-
-      <Reveal className="mt-16">
-        <GlassCTABanner />
-      </Reveal>
 
       <div className="mt-10">
         <Tabs

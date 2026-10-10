@@ -27,7 +27,7 @@ const BENEFITS = [
 
 export default function PlatformBenefits() {
   return (
-    <section className="border-b border-ink-950/8 bg-paper-50 py-20 sm:py-28">
+    <section data-section className="border-b border-ink-950/8 bg-paper-50 py-20 sm:py-28">
       <div className="container-page">
         <Reveal className="max-w-xl">
           <span className="text-xs font-semibold uppercase tracking-wide text-copper-500">

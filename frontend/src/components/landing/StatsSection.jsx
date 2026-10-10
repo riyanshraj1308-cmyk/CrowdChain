@@ -35,7 +35,7 @@ export default function StatsSection({ stats }) {
   ];
 
   return (
-    <section className="border-b border-ink-950/8 bg-ink-900 py-16 sm:py-20">
+    <section data-section className="panel-ink border-b border-ink-950/8 bg-ink-900 py-16 sm:py-20">
       <div className="container-page grid grid-cols-2 gap-8 lg:grid-cols-4">
         {items.map((item, i) => (
           <motion.div

@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu, X, Wallet, ChevronDown, LayoutDashboard, User, LogOut, Sun, Moon } from "lucide-react";
+import { Menu, X, Wallet, ChevronDown, LayoutDashboard, User, LogOut } from "lucide-react";
 import Button from "../ui/Button";
 import Avatar from "../ui/Avatar";
 import { useAuth } from "../../context/AuthContext";
-import { useTheme } from "../../context/ThemeContext";
 import { shortAddress } from "../../lib/format";
 
 const NAV_LINKS = [
@@ -19,7 +18,6 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const { isConnected, address, user, connect, disconnect, status } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -41,7 +39,7 @@ export default function Navbar() {
           CrowdChain
         </Link>
 
-        <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
+        <nav className="hidden items-center gap-8 lg:flex" aria-label="Primary">
           {NAV_LINKS.map((link) => (
             <NavLink
               key={link.to}
@@ -68,19 +66,7 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
-          <button
-            onClick={toggleTheme}
-            aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-            title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-ink-950/15 text-ink-600 transition-colors hover:bg-ink-950/5 hover:text-ink-900"
-          >
-            {theme === "dark" ? (
-              <Sun className="h-[18px] w-[18px]" aria-hidden="true" />
-            ) : (
-              <Moon className="h-[18px] w-[18px]" aria-hidden="true" />
-            )}
-          </button>
+        <div className="hidden items-center gap-3 lg:flex">
           {isConnected ? (
             <div className="relative">
               <button
@@ -142,7 +128,7 @@ export default function Navbar() {
         </div>
 
         <button
-          className="flex h-11 w-11 items-center justify-center rounded-md text-ink-900 md:hidden"
+          className="flex h-11 w-11 items-center justify-center rounded-md text-ink-900 lg:hidden"
           onClick={() => setMobileOpen(true)}
           aria-label="Open menu"
         >
@@ -171,7 +157,6 @@ function MenuItem({ to, icon: Icon, children, onClick }) {
 
 function MobileMenu({ open, onClose }) {
   const { isConnected, address, connect, disconnect, status } = useAuth();
-  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     if (!open) return;
@@ -191,14 +176,14 @@ function MobileMenu({ open, onClose }) {
       {open && (
         <>
           <motion.div
-            className="fixed inset-0 z-40 bg-ink-950/50 md:hidden"
+            className="fixed inset-0 z-40 bg-ink-950/50 lg:hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
           />
           <motion.div
-            className="fixed inset-y-0 right-0 z-50 flex w-[82%] max-w-xs flex-col gap-1 bg-paper-50 p-6 shadow-lifted md:hidden"
+            className="fixed inset-y-0 right-0 z-50 flex w-[82%] max-w-xs flex-col gap-1 bg-paper-50 p-6 shadow-lifted lg:hidden"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
@@ -210,17 +195,6 @@ function MobileMenu({ open, onClose }) {
             <div className="mb-4 flex items-center justify-between">
               <span className="font-display text-lg text-ink-950">Menu</span>
               <div className="flex items-center gap-1">
-                <button
-                  onClick={toggleTheme}
-                  aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-                  className="flex h-10 w-10 items-center justify-center rounded-md text-ink-600 hover:bg-ink-950/5 hover:text-ink-900"
-                >
-                  {theme === "dark" ? (
-                    <Sun className="h-5 w-5" aria-hidden="true" />
-                  ) : (
-                    <Moon className="h-5 w-5" aria-hidden="true" />
-                  )}
-                </button>
                 <button
                   onClick={onClose}
                   aria-label="Close menu"

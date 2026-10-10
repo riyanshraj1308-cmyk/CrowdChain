@@ -24,7 +24,7 @@ const POINTS = [
 
 export default function MilestoneVotingExplainer() {
   return (
-    <section id="voting" className="panel-ink border-b border-ink-950/8 bg-ink-950 py-20 text-paper-50 sm:py-28">
+    <section id="voting" data-section className="panel-ink border-b border-ink-950/8 bg-ink-950 py-20 text-paper-50 sm:py-28">
       <div className="container-page grid gap-12 lg:grid-cols-2 lg:gap-16">
         <Reveal>
           <span className="text-xs font-semibold uppercase tracking-wide text-copper-400">

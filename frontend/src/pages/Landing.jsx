@@ -1,31 +1,35 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Sun, Moon } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { api } from "../lib/api";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { shortAddress } from "../lib/format";
 import GlobeStudy from "../components/ui/GlobeStudy";
+import Auralis from "../components/ui/Auralis";
 import { FloatingPaths } from "../components/ui/BackgroundPaths";
 import FeaturedCampaigns from "../components/landing/FeaturedCampaigns";
 import HowItWorks from "../components/landing/HowItWorks";
+import LifecycleSection from "../components/landing/LifecycleSection";
 import MilestoneVotingExplainer from "../components/landing/MilestoneVotingExplainer";
 import PlatformBenefits from "../components/landing/PlatformBenefits";
+import SecurityModel from "../components/landing/SecurityModel";
 import StatsSection from "../components/landing/StatsSection";
 import Testimonials from "../components/landing/Testimonials";
 import FAQ from "../components/landing/FAQ";
-import FinalCTA from "../components/landing/FinalCTA";
 import "../styles/flux.css";
 
 /**
  * Landing — the CrowdChain home.
  *
- * Hero: copy on the left, the ThreeUI globe study as a big interactive stage
- * toward the right (drag to spin, scroll passes through to the page's Lenis
- * smoothing, click to pin). After the first scroll the whole rest of the page
- * sits on the BackgroundPaths line-art layer:
+ * Hero: copy sits on the left over a gradient that darkens toward the text;
+ * the ThreeUI globe study is the hero's BACKGROUND on the right half —
+ * full-height, no card box — and stays interactive (drag to spin, click to
+ * pin). From the first scroll down, the entire page is a dark zone on the
+ * BackgroundPaths line-art layer with Lenis snap section-to-section:
  *
- *   Why CrowdChain  →  Current campaigns  →  How it works → …
+ *   Why CrowdChain → How it works → Lifecycle → Governance → Security
+ *   → Stats → Voices → FAQ → Campaigns making progress → footer
  */
 
 const NAV = [
@@ -37,23 +41,7 @@ const NAV = [
 
 const META = ["Escrow-secured", "Community-governed", "Milestone-released"];
 
-function FluxThemeToggle() {
-  const { theme, toggleTheme } = useTheme();
-  return (
-    <button
-      onClick={toggleTheme}
-      aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-      title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-      className="flex h-11 w-11 items-center justify-center rounded-full border transition-colors fx-toggle"
-    >
-      {theme === "dark" ? (
-        <Sun className="h-[18px] w-[18px]" aria-hidden="true" />
-      ) : (
-        <Moon className="h-[18px] w-[18px]" aria-hidden="true" />
-      )}
-    </button>
-  );
-}
+
 
 export default function Landing() {
   const [campaigns, setCampaigns] = useState([]);
@@ -82,7 +70,6 @@ export default function Landing() {
           ))}
         </div>
         <div className="flex items-center gap-3">
-          <FluxThemeToggle />
           {isConnected ? (
             <Link to="/dashboard" className="fx-pill">
               {shortAddress(address)}
@@ -99,7 +86,7 @@ export default function Landing() {
         </div>
       </nav>
 
-      {/* ── hero: copy left, globe stage right ── */}
+      {/* ── hero: copy left, the globe on its dark ink stage right ── */}
       <section className="fx-hero">
         <div className="fx-copy">
           <div className="fx-kicker rise d5">ON-CHAIN CROWDFUNDING</div>
@@ -124,10 +111,7 @@ export default function Landing() {
         </div>
 
         <div className="fx-globe rise d9">
-          {/* `bare` renders the study on transparency; keepInteractivity gives
-              drag/click-to-pin back and forwards wheel input to the page's
-              Lenis instance so scrolling over the stage stays smooth. */}
-          <GlobeStudy mode={theme} bare keepInteractivity />
+          <GlobeStudy mode={theme} bare keepInteractivity={false} />
         </div>
       </section>
 
@@ -141,8 +125,8 @@ export default function Landing() {
       </div>
 
       {/*
-       * Everything after the first scroll sits on the BackgroundPaths layer:
-       * flowing line-art behind the sections, fading in under the hero.
+       * Everything after the first scroll sits on the BackgroundPaths layer
+       * over black. Lenis snaps full sections into view.
        */}
       <div className="fx-paths-bg">
         <div className="fx-paths-layer" aria-hidden="true">
@@ -154,19 +138,69 @@ export default function Landing() {
           {/* 1 — how CrowdChain differs from traditional crowdfunding */}
           <PlatformBenefits />
 
-          {/* 2 — current campaigns */}
+          <HowItWorks />
+          <LifecycleSection />
+          <MilestoneVotingExplainer />
+          <SecurityModel />
+          {stats && <StatsSection stats={stats} />}
+          <Testimonials />
+          <FAQ />
+
+          {/* second-last: the campaigns making progress, right above the footer */}
           {campaigns.length > 0 && (
-            <div className="px-5 sm:px-8 lg:px-10">
+            <div className="px-5 sm:px-8 lg:px-10" data-section>
               <FeaturedCampaigns campaigns={campaigns} />
             </div>
           )}
 
-          <HowItWorks />
-          <MilestoneVotingExplainer />
-          {stats && <StatsSection stats={stats} />}
-          <Testimonials />
-          <FAQ />
-          <FinalCTA />
+          {/* landing footer — same dark theme as the app footer, with the
+              same Auralis canvas backdrop the inner pages use */}
+          <footer className="fx-footer" data-section>
+            <div className="fx-footer-bg" aria-hidden="true">
+              <Auralis
+                height="100%"
+                colors={["#a99bff", "#c9c0ff", "#7c6cff"]}
+                speed={0.2}
+                grain={0.4}
+              />
+            </div>
+            <div className="fx-footer-grid">
+              <div>
+                <Link to="/" className="fx-wordmark">
+                  <span className="fx-mark" />
+                  CrowdChain
+                </Link>
+                <p className="fx-footer-lede">
+                  Funds are held in an on-chain escrow and released milestone by milestone, only
+                  after contributors vote to approve real, verified progress.
+                </p>
+              </div>
+              <div>
+                <h3 className="fx-footer-head">Platform</h3>
+                <ul className="fx-footer-list">
+                  <li><Link to="/explore">Explore Campaigns</Link></li>
+                  <li><Link to="/create">Start a Campaign</Link></li>
+                  <li><Link to="/about">How It Works</Link></li>
+                  <li><Link to="/dashboard">Dashboard</Link></li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="fx-footer-head">Resources</h3>
+                <ul className="fx-footer-list">
+                  <li><Link to="/voting">Milestone Voting</Link></li>
+                  <li><Link to="/about#reputation">Creator Reputation</Link></li>
+                  <li><Link to="/about#faq">FAQ</Link></li>
+                </ul>
+              </div>
+            </div>
+            <div className="fx-footer-bar">
+              <p>© {new Date().getFullYear()} CrowdChain. Built on Ethereum-compatible chains.</p>
+              <div className="flex gap-5">
+                <Link to="/about">Terms</Link>
+                <Link to="/about">Privacy</Link>
+              </div>
+            </div>
+          </footer>
         </div>
       </div>
     </div>

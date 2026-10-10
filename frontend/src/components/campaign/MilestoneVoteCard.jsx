@@ -2,7 +2,6 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { ThumbsUp, ThumbsDown, Clock, ExternalLink } from "lucide-react";
 import Button from "../ui/Button";
-import Badge from "../ui/Badge";
 import { formatEth } from "../../lib/format";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
@@ -66,7 +65,7 @@ export default function MilestoneVoteCard({
   const body = e ? "text-white/75" : "text-ink-700";
   const faint = e ? "text-white/50" : "text-ink-500";
   const fainter = e ? "text-white/40" : "text-ink-400";
-  const link = e ? "text-violet-300 hover:text-violet-300" : "text-copper-600";
+  const link = e ? "text-violet-300 hover:text-violet-200" : "text-copper-600";
   const track = e ? "bg-white/15" : "bg-ink-950/10";
   const approveLabel = e ? "text-moss-400" : "text-moss-600";
   const rejectLabel = e ? "text-rust-400" : "text-rust-500";
@@ -79,26 +78,25 @@ export default function MilestoneVoteCard({
           : "rounded-lg border border-ink-950/10 bg-paper-50 p-5 text-left sm:p-6"
       }
     >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <Badge variant="amber" icon={Clock}>
-            Voting in progress
-          </Badge>
-          <h3 className={`mt-2 font-display text-xl ${heading}`}>
-            Milestone {milestone.contractMilestoneId + 1}: {milestone.title}
-          </h3>
-        </div>
+      {/* header strip: milestone index + deadline, divided from the body */}
+      <div
+        className={`flex flex-wrap items-center justify-between gap-2 pb-3 ${
+          e ? "border-b border-white/10" : "border-b border-ink-950/10"
+        }`}
+      >
+        <span className={`font-mono text-xs uppercase tracking-[0.14em] ${faint}`}>
+          Milestone {milestone.contractMilestoneId + 1}
+        </span>
         {milestone.votingDeadline && (
-          <p className={`text-sm ${muted}`}>
-            Voting closes{" "}
-            <strong className={e ? "text-white/90" : "text-ink-900"}>
-              {new Date(milestone.votingDeadline).toLocaleDateString()}
-            </strong>
-          </p>
+          <span className={`flex items-center gap-1.5 text-xs ${muted}`}>
+            <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+            Closes {new Date(milestone.votingDeadline).toLocaleDateString()}
+          </span>
         )}
       </div>
 
-      <p className={`mt-3 text-sm leading-relaxed ${body}`}>{milestone.description}</p>
+      <h3 className={`mt-4 font-display text-xl ${heading}`}>{milestone.title}</h3>
+      <p className={`mt-2 text-sm leading-relaxed ${body}`}>{milestone.description}</p>
 
       {milestone.proofUrl && (
         <a
@@ -111,38 +109,46 @@ export default function MilestoneVoteCard({
         </a>
       )}
 
-      <div className="mt-5 space-y-2">
-        <div className={`flex h-3 w-full overflow-hidden rounded-full ${track}`}>
+      {/* tally: two-segment bar with an endpoint tick at the 50% threshold */}
+      <div className="mt-6">
+        <div className={`relative flex h-2.5 w-full overflow-hidden rounded-full ${track}`}>
           <motion.div
             className="h-full bg-moss-500"
+            style={e ? { background: "linear-gradient(90deg, rgb(118 165 94), rgb(150 200 120))" } : undefined}
             initial={{ width: 0 }}
             animate={{ width: `${forPct}%` }}
             transition={{ type: "spring", stiffness: 90, damping: 20 }}
           />
           <motion.div
             className="h-full bg-rust-400"
-            initial={{ width: 0 }}
+            style={e ? { background: "linear-gradient(90deg, rgb(198 84 61), rgb(226 110 88))" } : undefined}
+            initial={{ width: "100%" }}
             animate={{ width: `${100 - forPct}%` }}
             transition={{ type: "spring", stiffness: 90, damping: 20 }}
           />
+          <span
+            aria-hidden="true"
+            className="absolute inset-y-0 w-px bg-white/40"
+            style={{ left: "50%" }}
+          />
         </div>
-        <div className="flex items-center justify-between text-sm">
+        <div className="mt-2.5 flex items-center justify-between text-sm">
           <span className={approveLabel}>
-            <strong>{forPct}%</strong> approve ({votesFor.toLocaleString()} ETH weight)
+            <strong>{forPct}%</strong> approve · {votesFor.toLocaleString()} ETH
           </span>
           <span className={rejectLabel}>
-            <strong>{100 - forPct}%</strong> reject ({votesAgainst.toLocaleString()} ETH weight)
+            <strong>{100 - forPct}%</strong> reject · {votesAgainst.toLocaleString()} ETH
           </span>
         </div>
-        <p className={`text-xs ${faint}`}>
-          Requires ≥50% of cast voting weight to approve. Weight is proportional to each contributor's
-          ETH contribution.
+        <p className={`mt-2 text-xs ${faint}`}>
+          Requires ≥50% of cast voting weight to approve. Weight is proportional to each
+          contributor's ETH contribution.
         </p>
       </div>
 
       {voted ? (
         <div
-          className={`mt-5 rounded-md border px-4 py-3 text-sm font-medium ${
+          className={`mt-6 rounded-md border px-4 py-3 text-sm font-medium ${
             voted === "for"
               ? "border-moss-100 bg-moss-50 text-moss-600"
               : "border-rust-400/30 bg-rust-50 text-rust-600"
@@ -151,10 +157,10 @@ export default function MilestoneVoteCard({
           You voted to {voted === "for" ? "approve" : "reject"} this milestone.
         </div>
       ) : (
-        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Button
-            variant={e ? "accent" : "primary"}
-            className={`flex-1 ${e ? "" : "!bg-moss-500 !border-moss-500 hover:!bg-moss-600"}`}
+            variant="primary"
+            className="flex-1"
             icon={ThumbsUp}
             loading={voting === "for"}
             disabled={Boolean(voting)}
@@ -163,8 +169,8 @@ export default function MilestoneVoteCard({
             Vote to Approve
           </Button>
           <Button
-            variant="danger"
-            className={`flex-1 ${e ? "!border-rust-400/70 !text-rust-400 hover:!bg-rust-400/10" : ""}`}
+            variant="secondary"
+            className={`flex-1 ${e ? "!border-white/25 !text-white hover:!bg-white/10" : ""}`}
             icon={ThumbsDown}
             loading={voting === "against"}
             disabled={Boolean(voting)}

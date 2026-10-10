@@ -5,8 +5,6 @@ import { Check, Plus, Trash2, ArrowRight, ArrowLeft, Rocket } from "lucide-react
 import Button from "../components/ui/Button";
 import PageHero from "../components/ui/PageHero";
 import { Input, Textarea, Select } from "../components/ui/Field";
-import Reveal from "../components/ui/Reveal";
-import GlassCTABanner from "../components/ui/GlassCTABanner";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 
@@ -110,7 +108,12 @@ export default function CreateCampaign() {
 
   return (
     <div className="tab-content">
-      <PageHero kicker="Launch" title="Start a Campaign">
+      <PageHero
+        kicker="Launch"
+        title="Start a Campaign"
+        cta="Explore Campaigns"
+        ctaTo="/explore"
+      >
         Define clear milestones up front — contributors fund with more confidence when they know
         exactly what unlocks each release.
       </PageHero>
@@ -301,10 +304,6 @@ export default function CreateCampaign() {
             </Button>
           )}
         </div>
-
-        <Reveal className="mt-16">
-          <GlassCTABanner />
-        </Reveal>
       </div>
       </div>
     </div>

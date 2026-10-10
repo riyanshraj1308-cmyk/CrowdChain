@@ -265,16 +265,17 @@ html.lenis body {
 }
 
 /*
- * NeonCard — the Uiverse.io "pulse card" (by Spacious74), adapted to fluid
- * size (no fixed 300×250). Always-dark skin: white→black radial border, a
- * roaming glow dot, a blurred light ray and hairline rules over a dark
- * radial-gradient face. Content uses literal light colors inside.
+ * NeonCard — the vote/escrow panel skin. Violet ember light entering from the
+ * top-left over a deep near-black face, a 1px luminous border and the roaming
+ * glow dot as the signature. The old crossing hairlines and blurred ray are
+ * gone — they sliced through the vote UI's text. Content uses literal light
+ * colors inside.
  */
 .uvc {
   position: relative;
-  border-radius: 10px;
+  border-radius: 14px;
   padding: 1px;
-  background: radial-gradient(circle 230px at 0% 0%, #ffffff, #0c0d0d);
+  background: linear-gradient(140deg, rgba(169, 155, 255, 0.85) 0%, rgba(124, 108, 255, 0.18) 34%, rgba(20, 18, 34, 0.9) 70%, rgba(169, 155, 255, 0.45) 100%);
 }
 
 .uvc-card {
@@ -282,10 +283,11 @@ html.lenis body {
   position: relative;
   width: 100%;
   height: 100%;
-  border-radius: 9px;
-  border: solid 1px #202222;
-  background: radial-gradient(circle 280px at 0% 0%, #444444, #0c0d0d);
-  background-size: 20px 20px;
+  border-radius: 13px;
+  border: solid 1px rgba(169, 155, 255, 0.14);
+  background:
+    radial-gradient(120% 150% at 0% 0%, rgba(124, 108, 255, 0.16) 0%, rgba(124, 108, 255, 0.05) 38%, rgba(10, 9, 18, 0) 62%),
+    linear-gradient(160deg, #14121f 0%, #0c0b15 55%, #0a0912 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -295,17 +297,26 @@ html.lenis body {
   overflow: hidden;
 }
 
+/* Soft top-left sheen, kept clear of the content column. */
+.uvc-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(42% 60% at 4% 0%, rgba(201, 192, 255, 0.1), transparent 70%);
+  pointer-events: none;
+}
+
 .uvc-dot {
   width: 5px;
   aspect-ratio: 1;
   position: absolute;
-  background-color: #fff;
-  box-shadow: 0 0 10px #ffffff;
+  background-color: #cfc6ff;
+  box-shadow: 0 0 12px rgba(169, 155, 255, 0.9), 0 0 3px #fff;
   border-radius: 100px;
   z-index: 2;
   right: 10%;
-  top: 10%;
-  animation: uvc-move-dot 6s linear infinite;
+  top: 12%;
+  animation: uvc-move-dot 7s linear infinite;
 }
 
 @keyframes uvc-move-dot {
@@ -328,50 +339,7 @@ html.lenis body {
   }
 }
 
-.uvc-ray {
-  width: 220px;
-  height: 45px;
-  border-radius: 100px;
-  position: absolute;
-  background-color: #c7c7c7;
-  opacity: 0.4;
-  box-shadow: 0 0 50px #fff;
-  filter: blur(10px);
-  transform-origin: 10%;
-  top: 0%;
-  left: 0;
-  transform: rotate(40deg);
-}
 
-.uvc-line {
-  width: 100%;
-  height: 1px;
-  position: absolute;
-  background-color: #2c2c2c;
-  z-index: 2;
-}
-
-.uvc-line-t {
-  top: 10%;
-  background: linear-gradient(90deg, #888888 30%, #1d1f1f 70%);
-}
-
-.uvc-line-b {
-  bottom: 10%;
-}
-
-.uvc-line-l {
-  left: 10%;
-  width: 1px;
-  height: 100%;
-  background: linear-gradient(180deg, #747474 30%, #222424 70%);
-}
-
-.uvc-line-r {
-  right: 10%;
-  width: 1px;
-  height: 100%;
-}
 
 @media (prefers-reduced-motion: reduce) {
   .uvc-dot {
@@ -403,19 +371,59 @@ html.lenis body {
 .tab-content {
   position: relative;
   z-index: 1;
-  /* Transparent through the hero band so the backdrop shows at full
-   * strength, then the theme paper ramps in quickly below it. */
-  background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0) 400px,
-    rgb(var(--paper-50) / 0.9) 560px,
-    rgb(var(--paper-50) / 0.95) 720px,
-    rgb(var(--paper-50) / 0.97) 100%
-  );
+  /* No background and no min-height here: the paper ramp lives on the page
+   * wrapper below (fixed pixel stops — identical on every page), and short
+   * pages keep their natural height so the footer follows the content
+   * tightly instead of a blank sheet stretching toward it. */
 }
+
+/* (The former viewport-fill rules were removed: with the page-level ramp
+ * above, content keeps its natural height and the footer follows it. */
 
 /*
  * (BackgroundPaths washes live in flux.css as .fx-paths-layer — theme-aware
  * via the .fx custom properties.)
  */
+
+/* Page-level paper ramp (inner tabs): one continuous fade from the fixed
+ * Auralis backdrop into the theme paper, in FIXED pixels so it reads the
+ * same on tall and short pages alike. The fade starts BELOW the hero copy
+ * (~520px) — the white hero text needs the dark backdrop behind it — and
+ * completes by ~1640px, so there is never a visible edge. */
+.page-flux > main {
+  /* Positioned so the ramp paints above the fixed z-0 backdrop. */
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(
+    to bottom,
+    rgb(var(--paper-50) / 0) 0px,
+    rgb(var(--paper-50) / 0.35) 380px,
+    rgb(var(--paper-50) / 0.72) 600px,
+    rgb(var(--paper-50) / 0.94) 820px,
+    rgb(var(--paper-50)) 1000px
+  );
+}
+
+/* The landing's .fx wrapper keeps its own opaque surface — the shared ramp
+ * simply paints behind it, unseen. */
+
+/* PageHero's legibility veil — theme-aware. On the dark theme the Auralis
+ * backdrop is already near-black; a heavy black veil there draws a visible
+ * darker BOX around the hero, so dark gets only a faint vignette while
+ * light keeps the stronger guard for white text. */
+.hero-scrim-light,
+.hero-scrim-dark {
+  display: none;
+}
+
+.hero-scrim-light {
+  display: block;
+}
+
+html.dark .hero-scrim-light {
+  display: none;
+}
+
+html.dark .hero-scrim-dark {
+  display: block;
+}

@@ -73,6 +73,11 @@ const OCTANTS = [
 // How far outside the viewport the pet may sit while walking in / waiting.
 const MARGIN = 72;
 
+// When the cursor sits ON content (a button, a paragraph…), the pet homes
+// to the nearest free point on this radius around it — waiting beside the
+// component instead of pressing into it.
+const RING_RADIUS = 44;
+
 // Routes where the pet never appears.
 const EXCLUDED_PATHS = ["/deepfield"];
 
@@ -109,6 +114,9 @@ export default function CursorPet({
   const [entered, setEntered] = useState(false);
   const [frame, setFrame] = useState({ row: 0, col: 0 });
   const [petPos, setPetPos] = useState({ x: -999, y: -999 });
+  // The sprite can fail to load (offline, static hosts without the asset);
+  // when it does, the pet stays hidden instead of showing a broken frame.
+  const [spriteFailed, setSpriteFailed] = useState(false);
   const [particles, setParticles] = useState([]);
 
   const petPosRef = useRef({ x: -999, y: -999 });
@@ -411,34 +419,53 @@ export default function CursorPet({
       const bodyFree = !isBlockedRef.current(petPosRef.current.x, petPosRef.current.y);
       if (bodyFree && escapeTargetRef.current) escapeTargetRef.current = null;
 
-      // Waiting politely: when the cursor sits on content the pet cannot
-      // cross, it walks to the nearest free edge and rests there for a
-      // while instead of jittering against the wall.
+      // Waiting politely — but briefly. The pet re-homes every tick, so a
+      // short pause (~0.9s) is all it takes before it tries again — it must
+      // never look like it stopped following.
       if (restRef.current > 0) {
         restRef.current -= 1;
         updateIdle();
         return;
       }
+
+      // Where the pet wants to go: the cursor itself when it sits on open
+      // ground; otherwise the nearest free point on a small ring around it —
+      // it waits beside buttons and text it must not cross. Re-evaluated
+      // every tick, so it re-homes the instant the cursor or page moves.
       const targetBlocked = isBlockedRef.current(target.x, target.y);
-      if (
-        bodyFree &&
-        !standingOnContent &&
-        (dist <= stopDistance || (targetBlocked && dist < 90))
-      ) {
-        restRef.current = 50; // ~4.5s, then it tries again
-        updateIdle();
-        return;
+      let goal = target;
+      if (targetBlocked) {
+        let ring = null;
+        let ringD = Infinity;
+        for (let a = 0; a < 8; a++) {
+          const ang = (a / 8) * Math.PI * 2;
+          const rx = target.x + Math.cos(ang) * RING_RADIUS;
+          const ry = target.y + Math.sin(ang) * RING_RADIUS;
+          const d = Math.hypot(rx - petPosRef.current.x, ry - petPosRef.current.y);
+          if (d < ringD && !isBlockedRef.current(rx, ry)) {
+            ringD = d;
+            ring = { x: rx, y: ry };
+          }
+        }
+        if (ring) goal = ring;
       }
-      // It may only settle where its WHOLE body is clear of content — that
-      // keeps it from resting half-on a button or text edge.
-      if (dist <= stopDistance && bodyFree && !standingOnContent) {
+
+      const gdx = goal.x - petPosRef.current.x;
+      const gdy = goal.y - petPosRef.current.y;
+      const gdist = Math.hypot(gdx, gdy);
+
+      // Reached the goal (its whole body clear of content): short pause,
+      // then re-home. Only settles where the WHOLE body is clear — never
+      // half-on a button or text edge.
+      if (bodyFree && !standingOnContent && gdist <= stopDistance) {
+        restRef.current = 10;
         updateIdle();
         return;
       }
 
-      const inv = dist > 0 ? 1 / dist : 0;
-      let nx = dx * inv;
-      let ny = dy * inv;
+      const inv = gdist > 0 ? 1 / gdist : 0;
+      let nx = gdx * inv;
+      let ny = gdy * inv;
       if (behavior === "Run Away") {
         nx *= -1;
         ny *= -1;
@@ -583,9 +610,9 @@ export default function CursorPet({
         position: "fixed",
         inset: 0,
         pointerEvents: "none",
-        // Below toasts/modals/mobile-menu (z-50+) so the pet reads as part of
-        // the page, sliding under real chrome instead of floating over it.
-        zIndex: 45,
+        // Just above page content, below chrome (nav/modals/toasts): part
+        // of the page, not an overlay.
+        zIndex: 30,
       }}
     >
       {particles.map((p) => (
@@ -631,14 +658,24 @@ export default function CursorPet({
           backgroundSize: `${size * SPRITE_COLS}px ${size * SPRITE_ROWS}px`,
           backgroundPosition: `${-frame.col * size}px ${-frame.row * size}px`,
           imageRendering: pixelSnap ? "pixelated" : "auto",
-          // Grounding shadow + gentle entrance: the pet reads as standing on
-          // the page rather than hovering above it.
-          filter: "drop-shadow(0 7px 5px rgba(8, 6, 4, 0.45))",
-          opacity: entered ? 1 : 0,
+          // Grounding shadow: small and tight so the pet reads as standing
+          // on the page, not hovering over it.
+          filter: "drop-shadow(0 5px 4px rgba(8, 6, 4, 0.30))",
+          opacity: entered && !spriteFailed ? 1 : 0,
           transition: "opacity 700ms ease",
-          zIndex: 45,
+          zIndex: 30,
         }}
       />
+      {/* Hide the pet entirely if the sprite never loads. */}
+      {spriteSrc && !spriteFailed && (
+        <img
+          src={spriteSrc}
+          alt=""
+          aria-hidden="true"
+          style={{ display: "none" }}
+          onError={() => setSpriteFailed(true)}
+        />
+      )}
     </div>
   );
 }

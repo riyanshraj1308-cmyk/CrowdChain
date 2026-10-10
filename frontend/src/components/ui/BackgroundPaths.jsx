@@ -1,13 +1,18 @@
 "use client";
 
-import { motion } from "framer-motion";
-
 /**
- * BackgroundPaths — flowing animated SVG line paths (21st-dev background-paths).
+ * BackgroundPaths — flowing SVG line paths (21st-dev background-paths).
  *
  * `FloatingPaths` is the raw decorative layer (two mirrored sets) and is what
  * the landing page uses as its below-the-fold backdrop. The default export is
  * the full hero variant with the letter-by-letter animated title and CTA.
+ *
+ * Performance note: the paths render STATIC. The original 21st-dev version
+ * animated pathLength/pathOffset/opacity on 72 paths every frame via
+ * framer-motion, which forced constant SVG re-rasterization on the exact
+ * layer the page scrolls over — the source of the landing's scroll jank.
+ * The line-art still reads as flowing (the curves are long and overlapping);
+ * it just no longer burns the compositor.
  */
 
 export function FloatingPaths({ position }) {
@@ -21,7 +26,7 @@ export function FloatingPaths({ position }) {
       684 - i * 5 * position
     } ${875 - i * 6} ${684 - i * 5 * position} ${875 - i * 6}`,
     color: `rgba(15,23,42,${0.1 + i * 0.03})`,
-    width: 0.5 + i * 0.03,
+    width: 0.4 + i * 0.02,
   }));
 
   return (
@@ -34,23 +39,12 @@ export function FloatingPaths({ position }) {
       >
         <title>Background Paths</title>
         {paths.map((path) => (
-          <motion.path
+          <path
             key={path.id}
             d={path.d}
             stroke="currentColor"
             strokeWidth={path.width}
-            strokeOpacity={0.1 + path.id * 0.03}
-            initial={{ pathLength: 0.3, opacity: 0.6 }}
-            animate={{
-              pathLength: 1,
-              opacity: [0.3, 0.6, 0.3],
-              pathOffset: [0, 1, 0],
-            }}
-            transition={{
-              duration: 20 + Math.random() * 10,
-              repeat: Number.POSITIVE_INFINITY,
-              ease: "linear",
-            }}
+            strokeOpacity={0.04 + path.id * 0.012}
           />
         ))}
       </svg>

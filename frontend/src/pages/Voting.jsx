@@ -8,7 +8,6 @@ import NeonCard from "../components/ui/NeonCard";
 import PageHero from "../components/ui/PageHero";
 import { EmptyState } from "../components/ui/EmptyState";
 import Reveal from "../components/ui/Reveal";
-import GlassCTABanner from "../components/ui/GlassCTABanner";
 import Button from "../components/ui/Button";
 import Avatar from "../components/ui/Avatar";
 import { shortAddress } from "../lib/format";
@@ -36,7 +35,13 @@ export default function Voting() {
 
   return (
     <div className="tab-content">
-      <PageHero kicker="Community governance" icon={Vote} title="Milestone Voting">
+      <PageHero
+        kicker="Community governance"
+        icon={Vote}
+        title="Milestone Voting"
+        cta="Explore Campaigns"
+        ctaTo="/explore"
+      >
         These campaigns have submitted a milestone for review. Contributors vote with weight
         proportional to how much they've contributed — every vote here is a real, on-chain decision
         about whether funds move forward.
@@ -109,9 +114,6 @@ export default function Voting() {
         })}
       </div>
 
-      <Reveal className="mt-16">
-        <GlassCTABanner />
-      </Reveal>
     </div>
   );
 }
