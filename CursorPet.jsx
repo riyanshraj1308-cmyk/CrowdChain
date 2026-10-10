@@ -26,7 +26,7 @@ export default function CursorPet({
     size = 48,
     speed = 5,
     frameRate = 10,
-    stopDistance = 24,
+    stopDistance = 56,
     escapeRadius = 140,
     idleAnticsChance = 6,
     clampToViewport = true,
